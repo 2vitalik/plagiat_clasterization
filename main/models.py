@@ -59,34 +59,6 @@ class NewsManager(LargeManager):
                     date=data['date'], daytime=data['daytime'],
                     content=data['content'])
 
-    def process_stems(self):
-        i = 0
-        for news in self.all():
-            i += 1
-            if not i % 200:
-                print '→ processed:', i
-            news.process_stem()
-
-    def process_keywords(self):
-        i = 0
-        for news in self.all():
-            i += 1
-            if not i % 200:
-                print '→ processed:', i
-            news.process_keywords()
-
-    def calc_keywords(self):
-        i = 0
-        dt = datetime.now().strftime("[%H:%M:%S]")
-        print dt, 'calc_keywords'
-        for news in self.only('doc_id', 'keywords'):
-            if not i % 100:
-                dt = datetime.now().strftime("[%H:%M:%S]")
-                print dt, '→ processed:', i
-            i += 1
-            news.calc_keywords()
-            # break
-
 
 class News(models.Model):
     doc_id = models.IntegerField()
@@ -102,6 +74,16 @@ class News(models.Model):
     objects = NewsManager()
 
 
+class NewsContentManager(LargeManager):
+    def process_stems(self):
+        i = 0
+        for news in self.iterate():
+            i += 1
+            if not i % 200:
+                print '→ processed:', i
+            news.process_stem()
+
+
 class NewsContent(models.Model):
     news = models.ForeignKey(News)
     content = models.TextField()
@@ -110,7 +92,6 @@ class NewsContent(models.Model):
         return mystem(self.content)
 
     def create_stemmed(self):
-        # print '→ Processing stem for', self.doc_id
         stem = self.stem()
         stemmed = []
         lines = re.split('[\r\n]', stem)
@@ -135,12 +116,23 @@ class NewsContent(models.Model):
         # self.save()
 
 
+class NewsStemmedManager(LargeManager):
+    def process_keywords(self):
+        i = 0
+        for news in self.iterate():
+            i += 1
+            if not i % 200:
+                print '→ processed:', i
+            news.process_keywords()
+
+
 class NewsStemmed(models.Model):
     news = models.ForeignKey(News)
     stemmed = models.TextField(blank=True)
 
+    objects = NewsStemmedManager()
+
     def create_keywords(self):
-        # print '→ Processing keywords for', self.doc_id
         lines = self.stemmed.split('\n')
         keywords = []
         for line in lines:
@@ -163,12 +155,27 @@ class NewsStemmed(models.Model):
         self.save()
 
 
+class NewsKeywordsManager(LargeManager):
+    def calc_keywords(self):
+        i = 0
+        dt = datetime.now().strftime("[%H:%M:%S]")
+        print dt, 'calc_keywords'
+        for news in self.iterate():
+            if not i % 100:
+                dt = datetime.now().strftime("[%H:%M:%S]")
+                print dt, '→ processed:', i
+            i += 1
+            news.calc_keywords()
+            # break
+
+
 class NewsKeywords(models.Model):
     news = models.ForeignKey(News)
     keywords = models.TextField(blank=True)
 
+    objects = NewsKeywordsManager()
+
     def create_keywords(self):
-        # print '→ Processing keywords for', self.doc_id
         words = self.keywords.split(' ')
 
         data = Counter(words).most_common()
