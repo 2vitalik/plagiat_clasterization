@@ -9,7 +9,7 @@ from xml.etree import ElementTree
 from django.db import models
 import sys
 import math
-from main.utils import w2u, chunks
+from main.tools import w2u, chunks
 
 
 class NewsManager(models.Manager):

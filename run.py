@@ -1,7 +1,7 @@
 import os
 import subprocess
 import sys
-from main.utils import w2u
+from main.tools import w2u
 
 path = os.path.dirname(__file__)  # 'd:/Dropbox/Development/univer/plagiat_clasterization/'
 os.chdir(path)
