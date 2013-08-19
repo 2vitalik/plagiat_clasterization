@@ -1,5 +1,6 @@
 
 def w2u(value):
+    # return value.decode('cp1251')
     return value.decode('cp1251').encode('utf-8')
 
 
