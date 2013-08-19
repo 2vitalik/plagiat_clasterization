@@ -4,12 +4,13 @@ from datetime import datetime
 import os
 import re
 from subprocess import Popen, PIPE
-from time import sleep
 from xml.etree import ElementTree
-from django.db import models
 import sys
 import math
-from main.tools import w2u, chunks
+
+from django.db import models
+
+from libs.tools import w2u, chunks
 
 
 class NewsManager(models.Manager):
