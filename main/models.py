@@ -1,29 +1,35 @@
 # coding: utf-8
-from collections import Counter
-from datetime import datetime
 import os
 import re
-from xml.etree import ElementTree
-import sys
-import math
-
+import gc
+from collections import Counter
+from datetime import datetime
 from django.db import models
-from libs.file import save_lines
+from xml.etree import ElementTree
 from libs.mystem import mystem
-
 from libs.tools import w2u, chunks
+from libs.xmath import average_deviation, alpha_beta
 
 
-class NewsManager(models.Manager):
+class LargeManager(models.Manager):
+    def iterate(self, chunksize=1000):
+        pk = 0
+        last_pk = self.order_by('-pk')[0].pk
+        queryset = self.order_by('pk')
+        while pk < last_pk:
+            for row in queryset.filter(pk__gt=pk)[:chunksize]:
+                pk = row.pk
+                yield row
+            gc.collect()
+
+
+class NewsManager(LargeManager):
     def load_from_folder(self, news_path):
         files = os.listdir(news_path)
         items = []
         for filename in files:
-            if filename in ['.', '..']:
-                continue
             news = self.load_from_xml("{}/{}".format(news_path, filename))
             items.append(news)
-            # news.save()
         print '§ Total entries:', len(items)
         chunk_size = 250
         processed = 0
@@ -32,14 +38,15 @@ class NewsManager(models.Manager):
             print '→ Processed:', processed
 
     def load_from_xml(self, filename):
+        def fix_xml(text):
+            text = "<root>{}</root>".format(text)
+            text = text.replace('&', '&amp;')
+            text = text.replace('<p>', '\n')
+            text = text.replace('<>', ' ')
+            return w2u(text)
         print '→ Processing file:', filename
         text = open(filename).read()
-        text = "<root>{}</root>".format(text)
-        text = text.replace('&', '&amp;')
-        text = text.replace('<p>', '\n')
-        text = text.replace('<>', ' ')
-        text = w2u(text)
-        tree = ElementTree.fromstring(text)
+        tree = ElementTree.fromstring(fix_xml(text))
         data = {}
         for child in tree:
             name = child.tag
@@ -94,70 +101,20 @@ class News(models.Model):
 
     objects = NewsManager()
 
+
+class NewsContent(models.Model):
+    news = models.ForeignKey(News)
+    content = models.TextField()
+
     def stem(self):
         return mystem(self.content)
 
-    def old_process_stem(self):
-        # sleep(0.3)
-        print '\n' * 2
-        print '→ Processing stem for', self.doc_id
-        stem = self.stem()
-        stemmed = []
-        i = 1
-        ok = True
-        is_word = True
-        lines = re.split('[\r\n]', stem)
-        len1 = len(lines)
-        lines = filter(str.strip, lines)  # удаление пустых строк
-        len2 = len(lines)
-        filename = '.data/stemmed/{}.txt'.format(self.doc_id)
-        save_lines(filename, lines)
-        # if len1 != len2:
-        #     print >> sys.stderr, '× Были пустые строки!'
-        for line in lines:
-            if is_word:
-                word = line.strip()
-                if word == '-': continue
-                word = re.sub('\(.*?\)', '', word)
-                word = re.sub('=[^=]*?([|}])', '\\1', word)
-                word = re.sub(',[^=]*?([|}])', '\\1', word)
-                stemmed.append(word)
-                if re.search(r'\\n|\\r|[_,(:);".0-9]', word) or not word:
-                    if i == 1:
-                        i += 1
-                        continue
-                    # print >> sys.stderr, '→ Processing stem for', self.doc_id
-                    print >> sys.stderr, \
-                        '× Error in line %d: "%s" is not word' % (i, word)
-                    ok = False
-                    # break
-            else:
-                delim = line.strip()
-                if re.search(r'[А-Яа-я]', delim, re.UNICODE) or not delim:
-                    # print >> sys.stderr, '→ Processing stem for', self.doc_id
-                    print >> sys.stderr, \
-                        '× Error in line %d: "%s" is not delim' % (i, delim)
-                    ok = False
-                    # break
-            is_word = not is_word
-            i += 1
-        # if ok:
-        #     self.stemmed = '\n'.join(stemmed)
-        #     self.save()
-            # print '· Успешно обработано %d строк.' % i
-        # else:
-        #     print >> sys.stderr, '× Ошибка обработки!'
-
-    def process_stem(self):
-        # print '\n'
+    def create_stemmed(self):
         # print '→ Processing stem for', self.doc_id
         stem = self.stem()
         stemmed = []
         lines = re.split('[\r\n]', stem)
         lines = filter(str.strip, lines)  # удаление пустых строк
-        # f = open('.data/stemmed/{}.txt'.format(self.doc_id), 'w')
-        # f.write('\n'.join(lines))
-        # f.close()
         for line in lines:
             word = line.strip()
             if re.search(r'\\n|\\r|[_":;]', word):
@@ -177,7 +134,12 @@ class News(models.Model):
         # self.stemmed = '\n'.join(stemmed)
         # self.save()
 
-    def process_keywords(self):
+
+class NewsStemmed(models.Model):
+    news = models.ForeignKey(News)
+    stemmed = models.TextField(blank=True)
+
+    def create_keywords(self):
         # print '→ Processing keywords for', self.doc_id
         lines = self.stemmed.split('\n')
         keywords = []
@@ -200,50 +162,33 @@ class News(models.Model):
         # print self.keywords
         self.save()
 
-    def calc_keywords(self):
-        # print '→ Processing keywords for', self.doc_id
-        words = self.keywords.split(' ')
-        keywords = []
-        word_count = 0
-        summa = 0
-        for word, count in Counter(words).most_common():
-            word_count += 1
-            summa += count
-        if word_count <= 1:
-            # print self.doc_id, '-', self.content
-            return
-        average = float(summa) / word_count
-        deviation = 0
-        for word, count in Counter(words).most_common():
-            deviation += (count - average) ** 2
-        deviation /= word_count - 1
-        deviation = math.sqrt(deviation)
-        # NewsStats(news=self, word_count=word_count, summa=summa,
-        #           average=average, deviation=deviation).save()
-        # print average, deviation
-
-        alpha = 100
-        beta = 100
-        for word, count in Counter(words).most_common():
-            weight = float(count) / summa
-            if average - alpha * deviation <= count <= average + beta * deviation:
-                keywords.append(Keyword(news=self, word=word, count=count, weight=weight))
-        # Keyword.objects.bulk_create(keywords)
-
-
-class NewsContent(models.Model):
-    news = models.ForeignKey(News)
-    content = models.TextField()
-
-
-class NewsStemmed(models.Model):
-    news = models.ForeignKey(News)
-    stemmed = models.TextField(blank=True)
-
 
 class NewsKeywords(models.Model):
     news = models.ForeignKey(News)
     keywords = models.TextField(blank=True)
+
+    def create_keywords(self):
+        # print '→ Processing keywords for', self.doc_id
+        words = self.keywords.split(' ')
+
+        data = Counter(words).most_common()
+        values = [item[1] for item in data]
+        word_count = len(values)
+        summa, average, deviation = average_deviation(values)
+
+        NewsStats.objects.create(news=self, word_count=word_count, summa=summa,
+                                 average=average, deviation=deviation)
+
+        keywords = []
+        alpha = 100
+        beta = 100
+        for word, count in Counter(words).most_common():
+            weight = float(count) / summa
+            if alpha_beta(count, average, deviation, alpha, beta):
+                keyword = Keyword(news=self, word=word, count=count,
+                                  weight=weight)
+                keywords.append(keyword)
+        Keyword.objects.bulk_create(keywords)
 
 
 class NewsStats(models.Model):
