@@ -3,12 +3,13 @@ from collections import Counter
 from datetime import datetime
 import os
 import re
-from subprocess import Popen, PIPE
 from xml.etree import ElementTree
 import sys
 import math
 
 from django.db import models
+from libs.file import save_lines
+from libs.mystem import mystem
 
 from libs.tools import w2u, chunks
 
@@ -94,10 +95,7 @@ class News(models.Model):
     objects = NewsManager()
 
     def stem(self):
-        process = Popen('".data/mystem.exe" -cnig', shell=True, cwd='.',
-                        stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        out, err = process.communicate(self.content.encode('cp1251'))
-        return w2u(out)
+        return mystem(self.content)
 
     def old_process_stem(self):
         # sleep(0.3)
@@ -112,9 +110,8 @@ class News(models.Model):
         len1 = len(lines)
         lines = filter(str.strip, lines)  # удаление пустых строк
         len2 = len(lines)
-        f = open('.data/stemmed/{}.txt'.format(self.doc_id), 'w')
-        f.write('\n'.join(lines))
-        f.close()
+        filename = '.data/stemmed/{}.txt'.format(self.doc_id)
+        save_lines(filename, lines)
         # if len1 != len2:
         #     print >> sys.stderr, '× Были пустые строки!'
         for line in lines:
@@ -232,6 +229,21 @@ class News(models.Model):
             if average - alpha * deviation <= count <= average + beta * deviation:
                 keywords.append(Keyword(news=self, word=word, count=count, weight=weight))
         # Keyword.objects.bulk_create(keywords)
+
+
+class NewsContent(models.Model):
+    news = models.ForeignKey(News)
+    content = models.TextField()
+
+
+class NewsStemmed(models.Model):
+    news = models.ForeignKey(News)
+    stemmed = models.TextField(blank=True)
+
+
+class NewsKeywords(models.Model):
+    news = models.ForeignKey(News)
+    keywords = models.TextField(blank=True)
 
 
 class NewsStats(models.Model):
