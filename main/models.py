@@ -66,7 +66,6 @@ class NewsManager(models.Manager):
                 print '→ processed:', i
             news.process_keywords()
 
-
     def calc_keywords(self):
         i = 0
         dt = datetime.now().strftime("[%H:%M:%S]")
