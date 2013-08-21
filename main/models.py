@@ -100,7 +100,7 @@ class NewsContentManager(LargeManager):
         processed = 0
         for chunk in chunks(items, chunk_size):
             processed += len(NewsStemmed.objects.bulk_create(chunk))
-            print '→ Processed:', processed
+            print dt(), '→ Processed:', processed
 
 
 class NewsContent(models.Model):
@@ -127,9 +127,10 @@ class NewsContent(models.Model):
             if len(word) < 5:
                 continue
             if re.search('.*\{.*\}', word) and not re.match('(.*)\{(.*)\}', word):
-                print word
-            # if not re.search('.*\{.*\}', word):
-            #     continue
+                print '?', word
+            if not re.search('.*\{.*\}', word):
+                # print 'x', word
+                continue
             # word = re.sub('\(.*?\)', '', word)
             # word = re.sub('=[^=]*?([|}])', '\\1', word)
             # word = re.sub(',[^=]*?([|}])', '\\1', word)
@@ -139,17 +140,17 @@ class NewsContent(models.Model):
 
 class NewsStemmedManager(LargeManager):
     def create_keywords(self):
-        print dt(), '§ Extract list of keywords from stemmed data'
+        print dt(), '§ Extract list of valid keywords from stemmed data'
         i = 0
         items = []
-        for news in self.iterate():
+        for news in self.iterate(100):
             i += 1
             if not i % 500:
-                print '→ processed:', i
+                print dt(), '→ processed:', i
             news_keyword = news.create_keywords()
             items.append(news_keyword)
-        print dt(), '§ Adding news_keywords of DB'
-        chunk_size = 250
+        print dt(), '§ Adding news_keywords to DB'
+        chunk_size = 500
         processed = 0
         for chunk in chunks(items, chunk_size):
             processed += len(NewsStemmed.objects.bulk_create(chunk))
@@ -163,9 +164,11 @@ class NewsStemmed(models.Model):
     objects = NewsStemmedManager()
 
     def create_keywords(self):
+        # print self.news_id
         lines = self.stemmed.split('\n')
         keywords = []
         for line in lines:
+            # print line
             m = re.match('(.*)\{(.*)\}', line)
             stem = m.group(2)
             items = stem.split('|')
@@ -186,7 +189,7 @@ class NewsStemmed(models.Model):
 
 class NewsKeywordsManager(LargeManager):
     def create_keywords(self):
-        print dt(), '§ Create keywords'
+        print dt(), '§ Create keywords '
         i = 0
         for news in self.iterate():
             i += 1
