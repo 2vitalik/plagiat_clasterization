@@ -2,12 +2,13 @@
 import os
 import re
 import gc
+import time
 from collections import Counter
 from datetime import datetime
 from django.db import models
 from xml.etree import ElementTree
 from libs.mystem import mystem
-from libs.tools import w2u, chunks
+from libs.tools import w2u, chunks, dt
 from libs.xmath import average_deviation, alpha_beta
 
 
@@ -25,18 +26,19 @@ class LargeManager(models.Manager):
 
 class NewsManager(LargeManager):
     def load_from_folder(self, news_path):
-        print '§ Loading files, adding news to DB, creating news_contests'
+        print dt(), '§ Loading files, adding news to DB, creating news_contests'
         files = os.listdir(news_path)
         items = []
         i = 0
         for filename in files:
             i += 1
             if not i % 500:
-                print i
+                print dt(), '→ processed:', i
             news_content = \
                 self.load_from_xml("{}/{}".format(news_path, filename))
             items.append(news_content)
-        print '§ Total entries:', len(items)
+        print dt(), '→ Total entries:', len(items)
+        print dt(), '§ Adding news_contests to DB'
         chunk_size = 250
         processed = 0
         for chunk in chunks(items, chunk_size):
@@ -83,23 +85,35 @@ class News(models.Model):
 
 
 class NewsContentManager(LargeManager):
-    def process_stems(self):
+    def create_stems(self):
+        print dt(), '§ Creating stems of news'
         i = 0
+        items = []
         for news in self.iterate():
             i += 1
-            if not i % 200:
-                print '→ processed:', i
-            news.process_stem()
+            if not i % 100:
+                print dt(), '→ processed:', i
+            stemmed = news.create_stemmed()
+            items.append(stemmed)
+        print dt(), '§ Adding stems of DB'
+        chunk_size = 250
+        processed = 0
+        for chunk in chunks(items, chunk_size):
+            processed += len(NewsStemmed.objects.bulk_create(chunk))
+            print '→ Processed:', processed
 
 
 class NewsContent(models.Model):
     news = models.ForeignKey(News)
     content = models.TextField()
 
+    objects = NewsContentManager()
+
     def stem(self):
         return mystem(self.content)
 
     def create_stemmed(self):
+        # print dt(), self.news_id
         stem = self.stem()
         stemmed = []
         lines = re.split('[\r\n]', stem)
@@ -119,13 +133,13 @@ class NewsContent(models.Model):
             # word = re.sub('\(.*?\)', '', word)
             # word = re.sub('=[^=]*?([|}])', '\\1', word)
             # word = re.sub(',[^=]*?([|}])', '\\1', word)
-            # stemmed.append(word)
-        # self.stemmed = '\n'.join(stemmed)
-        # self.save()
+            stemmed.append(word)
+        return NewsStemmed(news=self.news, stemmed='\n'.join(stemmed))
 
 
 class NewsStemmedManager(LargeManager):
     def process_keywords(self):
+        print dt(), '§ Extract list of keywords from stemmed data'
         i = 0
         for news in self.iterate():
             i += 1
@@ -166,12 +180,10 @@ class NewsStemmed(models.Model):
 class NewsKeywordsManager(LargeManager):
     def calc_keywords(self):
         i = 0
-        dt = datetime.now().strftime("[%H:%M:%S]")
-        print dt, 'calc_keywords'
+        print dt(), 'calc_keywords'
         for news in self.iterate():
             if not i % 100:
-                dt = datetime.now().strftime("[%H:%M:%S]")
-                print dt, '→ processed:', i
+                print dt(), '→ processed:', i
             i += 1
             news.calc_keywords()
             # break
