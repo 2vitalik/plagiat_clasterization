@@ -1,5 +1,6 @@
 import os
 import sys
+from libs.file import read_lines
 from libs.tools import dt
 
 path = os.path.dirname(__file__)
@@ -7,7 +8,7 @@ os.chdir(path)
 sys.path.append(path)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plagiat_clasterization.settings")
 
-from main.models import News, NewsContent, NewsStemmed, NewsKeywords
+from main.models import News, NewsContent, NewsStemmed, NewsKeywords, Keyword
 
 # create News and NewsContent
 # news_path = 'd:/Vitalik/plagiat.giga/news'
@@ -22,8 +23,22 @@ from main.models import News, NewsContent, NewsStemmed, NewsKeywords
 # create NewsStats
 # NewsKeywords.objects.create_stats()
 
-# create Keyword
-coefficients = [(1, 2), (1, 3), (1, 4)]
-for alpha, beta in coefficients:
-    print dt(), 'alpha=%.2f, beta=%.2f' % (alpha, beta)
-    NewsKeywords.objects.create_keywords(alpha, beta, gen_report=True)
+# gen_reports
+# coefficients = [(1, 2), (1, 3), (1, 4)]
+# coefficients = [(1, 100)]
+# for alpha, beta in coefficients:
+#     print dt(), 'alpha=%.2f, beta=%.2f' % (alpha, beta)
+#     NewsKeywords.objects.create_keywords(alpha, beta, gen_report=True)
+
+# create keywords
+# alpha = 10
+# beta = 100
+# NewsKeywords.objects.create_keywords(alpha, beta)
+
+news_ids = read_lines('.conf/clustered.txt')
+news_ids = map(int, news_ids)
+
+print news_ids
+
+# ...
+Keyword.objects.calculate_cosinuses(news_ids)
