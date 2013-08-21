@@ -25,16 +25,22 @@ class LargeManager(models.Manager):
 
 class NewsManager(LargeManager):
     def load_from_folder(self, news_path):
+        print '§ Loading files, adding news to DB, creating news_contests'
         files = os.listdir(news_path)
         items = []
+        i = 0
         for filename in files:
-            news = self.load_from_xml("{}/{}".format(news_path, filename))
-            items.append(news)
+            i += 1
+            if not i % 500:
+                print i
+            news_content = \
+                self.load_from_xml("{}/{}".format(news_path, filename))
+            items.append(news_content)
         print '§ Total entries:', len(items)
         chunk_size = 250
         processed = 0
         for chunk in chunks(items, chunk_size):
-            processed += len(self.bulk_create(chunk))
+            processed += len(NewsContent.objects.bulk_create(chunk))
             print '→ Processed:', processed
 
     def load_from_xml(self, filename):
@@ -44,7 +50,7 @@ class NewsManager(LargeManager):
             text = text.replace('<p>', '\n')
             text = text.replace('<>', ' ')
             return w2u(text)
-        print '→ Processing file:', filename
+        # print '→ Processing file:', filename
         text = open(filename).read()
         tree = ElementTree.fromstring(fix_xml(text))
         data = {}
@@ -54,10 +60,12 @@ class NewsManager(LargeManager):
             # print "[{}]=[{}]".format(child.tag, value.encode('utf-8'))
             data[name] = value
         doc_id = int(data['docID'][8:])
-        return News(doc_id=doc_id, url=data['docURL'],
+        news = News(doc_id=doc_id, url=data['docURL'],
                     subject=data['subject'], agency=data['agency'],
-                    date=data['date'], daytime=data['daytime'],
-                    content=data['content'])
+                    date=data['date'], daytime=data['daytime'])
+        news.save()
+        news_content = NewsContent(news=news, content=data['content'])
+        return news_content
 
 
 class News(models.Model):

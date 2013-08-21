@@ -9,9 +9,9 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plagiat_clasterization.settings
 
 from main.models import News
 
-# # fill out database
-# # News.objects.load_from_folder('.data/news')
-#
+# fill out database
+News.objects.load_from_folder('d:/Vitalik/plagiat.giga/news')
+
 # # print News.objects.get(doc_id=1495).stem()
 #
 # # process stems (first step)
@@ -24,4 +24,4 @@ from main.models import News
 # #     News.objects.get(doc_id=doc_id).process_stem()
 
 # News.objects.process_keywords()
-News.objects.calc_keywords()
+# News.objects.calc_keywords()
