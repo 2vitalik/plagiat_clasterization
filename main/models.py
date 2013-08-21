@@ -269,10 +269,10 @@ class NewsKeywords(models.Model):
         for word, count in data:
             weight = float(count) / stats.summa
             if alpha_beta(count, stats.average, stats.deviation, alpha, beta):
-                # keyword = Keyword(news=self.news, word=word, count=count,
-                #                   weight=weight)
-                # keywords.append(keyword)
-                pass
+                if not report:
+                    keyword = Keyword(news=self.news, word=word, count=count,
+                                      weight=weight)
+                    keywords.append(keyword)
             if report:
                 if count < left:
                     report.write(" [<] %d - %s\n" % (count, word.encode('cp1251')))
@@ -280,7 +280,8 @@ class NewsKeywords(models.Model):
                 if count > right:
                     report.write(" [>] %d - %s\n" % (count, word.encode('cp1251')))
                     # print self.news.doc_id, left, right, count, word
-        # Keyword.objects.bulk_create(keywords)
+        if not report:
+            Keyword.objects.bulk_create(keywords)
 
 
 class NewsStats(models.Model):
@@ -394,7 +395,7 @@ class CosResult(models.Model):
     news_2 = models.ForeignKey(News, related_name='cos2')
     doc_1 = models.IntegerField(default=0)
     doc_2 = models.IntegerField(default=0)
-    cos = models.FloatField(default=-1)
+    cos = models.FloatField(default=-1, db_index=True)
 
 
 class CosResultSeveral(models.Model):
@@ -402,4 +403,4 @@ class CosResultSeveral(models.Model):
     news_2 = models.ForeignKey(News, related_name='cos_2')
     doc_1 = models.IntegerField(default=0)
     doc_2 = models.IntegerField(default=0)
-    cos = models.FloatField(default=-1)
+    cos = models.FloatField(default=-1, db_index=True)
