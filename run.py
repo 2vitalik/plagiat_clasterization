@@ -1,5 +1,6 @@
 import os
 import sys
+from libs.tools import dt
 
 path = os.path.dirname(__file__)
 os.chdir(path)
@@ -18,5 +19,11 @@ from main.models import News, NewsContent, NewsStemmed, NewsKeywords
 # create NewsKeyword
 # NewsStemmed.objects.create_keywords()
 
+# create NewsStats
+# NewsKeywords.objects.create_stats()
+
 # create Keyword
-NewsKeywords.objects.create_keywords()
+coefficients = [(1, 2), (1, 3), (1, 4)]
+for alpha, beta in coefficients:
+    print dt(), 'alpha=%.2f, beta=%.2f' % (alpha, beta)
+    NewsKeywords.objects.create_keywords(alpha, beta, gen_report=True)
