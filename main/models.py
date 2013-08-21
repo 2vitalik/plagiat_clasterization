@@ -96,7 +96,7 @@ class NewsContentManager(LargeManager):
             stemmed = news.create_stemmed()
             items.append(stemmed)
         print dt(), '§ Adding stems of DB'
-        chunk_size = 250
+        chunk_size = 10
         processed = 0
         for chunk in chunks(items, chunk_size):
             processed += len(NewsStemmed.objects.bulk_create(chunk))
@@ -138,14 +138,22 @@ class NewsContent(models.Model):
 
 
 class NewsStemmedManager(LargeManager):
-    def process_keywords(self):
+    def create_keywords(self):
         print dt(), '§ Extract list of keywords from stemmed data'
         i = 0
+        items = []
         for news in self.iterate():
             i += 1
-            if not i % 200:
+            if not i % 500:
                 print '→ processed:', i
-            news.process_keywords()
+            news_keyword = news.create_keywords()
+            items.append(news_keyword)
+        print dt(), '§ Adding news_keywords of DB'
+        chunk_size = 250
+        processed = 0
+        for chunk in chunks(items, chunk_size):
+            processed += len(NewsStemmed.objects.bulk_create(chunk))
+            print '→ Processed:', processed
 
 
 class NewsStemmed(models.Model):
@@ -172,21 +180,19 @@ class NewsStemmed(models.Model):
                     break  # use only first form
             for word in set(forms):
                 keywords.append(word)
-        self.keywords = ' '.join(keywords)
-        # print self.keywords
-        self.save()
+        keywords = ' '.join(keywords)
+        return NewsKeywords(news=self.news, keywords=keywords)
 
 
 class NewsKeywordsManager(LargeManager):
-    def calc_keywords(self):
+    def create_keywords(self):
+        print dt(), '§ Create keywords'
         i = 0
-        print dt(), 'calc_keywords'
         for news in self.iterate():
+            i += 1
             if not i % 100:
                 print dt(), '→ processed:', i
-            i += 1
-            news.calc_keywords()
-            # break
+            news.create_keywords()
 
 
 class NewsKeywords(models.Model):
