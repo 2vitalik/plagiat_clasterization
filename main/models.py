@@ -9,7 +9,7 @@ from django.db import models
 from xml.etree import ElementTree
 from libs.mystem import mystem
 from libs.tools import w2u, chunks, dt
-from libs.xmath import average_deviation, alpha_beta
+from libs.xmath import average_deviation, alpha_beta, DeviationError
 
 
 class LargeManager(models.Manager):
@@ -91,12 +91,14 @@ class NewsContentManager(LargeManager):
         items = []
         for news in self.iterate():
             i += 1
+            # if i > 500:
+            #     break
             if not i % 100:
                 print dt(), '→ processed:', i
             stemmed = news.create_stemmed()
             items.append(stemmed)
         print dt(), '§ Adding stems of DB'
-        chunk_size = 10
+        chunk_size = 50
         processed = 0
         for chunk in chunks(items, chunk_size):
             processed += len(NewsStemmed.objects.bulk_create(chunk))
@@ -131,9 +133,9 @@ class NewsContent(models.Model):
             if not re.search('.*\{.*\}', word):
                 # print 'x', word
                 continue
-            # word = re.sub('\(.*?\)', '', word)
-            # word = re.sub('=[^=]*?([|}])', '\\1', word)
-            # word = re.sub(',[^=]*?([|}])', '\\1', word)
+            word = re.sub('\(.*?\)', '', word)
+            word = re.sub('=[^=]*?([|}])', '\\1', word)
+            word = re.sub(',[^=]*?([|}])', '\\1', word)
             stemmed.append(word)
         return NewsStemmed(news=self.news, stemmed='\n'.join(stemmed))
 
@@ -145,16 +147,18 @@ class NewsStemmedManager(LargeManager):
         items = []
         for news in self.iterate(100):
             i += 1
+            # if i > 500:
+            #     break
             if not i % 500:
                 print dt(), '→ processed:', i
             news_keyword = news.create_keywords()
             items.append(news_keyword)
         print dt(), '§ Adding news_keywords to DB'
-        chunk_size = 500
+        chunk_size = 250
         processed = 0
         for chunk in chunks(items, chunk_size):
-            processed += len(NewsStemmed.objects.bulk_create(chunk))
-            print '→ Processed:', processed
+            processed += len(NewsKeywords.objects.bulk_create(chunk))
+            print dt(), '→ Processed:', processed
 
 
 class NewsStemmed(models.Model):
@@ -175,14 +179,17 @@ class NewsStemmed(models.Model):
             forms = []
             for item in items:
                 try:
+                    # print item
                     word, word_type = item.split('=')
                 except ValueError:
                     word, word_type = item, '?'
+                # print word_type
                 if word_type in ['S', 'V', 'A', 'ADV']:
                     forms.append(word)
                     break  # use only first form
             for word in set(forms):
                 keywords.append(word)
+        # print keywords
         keywords = ' '.join(keywords)
         return NewsKeywords(news=self.news, keywords=keywords)
 
@@ -206,22 +213,23 @@ class NewsKeywords(models.Model):
 
     def create_keywords(self):
         words = self.keywords.split(' ')
-
         data = Counter(words).most_common()
         values = [item[1] for item in data]
         word_count = len(values)
-        summa, average, deviation = average_deviation(values)
-
-        NewsStats.objects.create(news=self, word_count=word_count, summa=summa,
-                                 average=average, deviation=deviation)
-
+        try:
+            summa, average, deviation = average_deviation(values)
+        except DeviationError:
+            print 'x Bad news (few words):', self.news_id
+            return
+        NewsStats.objects.create(news=self.news, word_count=word_count,
+                                 summa=summa, average=average, deviation=deviation)
         keywords = []
         alpha = 100
         beta = 100
         for word, count in Counter(words).most_common():
             weight = float(count) / summa
             if alpha_beta(count, average, deviation, alpha, beta):
-                keyword = Keyword(news=self, word=word, count=count,
+                keyword = Keyword(news=self.news, word=word, count=count,
                                   weight=weight)
                 keywords.append(keyword)
         Keyword.objects.bulk_create(keywords)

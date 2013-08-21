@@ -1,6 +1,9 @@
 import math
 
 
+class DeviationError(Exception):
+    pass
+
 def average_deviation(values):
     count = len(values)
     summa = 0
@@ -8,7 +11,7 @@ def average_deviation(values):
         summa += value
     if count <= 1:
         # print self.doc_id, '-', self.content
-        raise Exception('...')
+        raise DeviationError()
     average = float(summa) / count
     deviation = 0
     for value in values:

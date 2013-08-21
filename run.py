@@ -16,7 +16,7 @@ from main.models import News, NewsContent, NewsStemmed, NewsKeywords
 # NewsContent.objects.create_stems()
 
 # create NewsKeyword
-NewsStemmed.objects.create_keywords()
+# NewsStemmed.objects.create_keywords()
 
 # create Keyword
 NewsKeywords.objects.create_keywords()
