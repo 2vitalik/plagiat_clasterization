@@ -313,15 +313,10 @@ class KeywordManager(LargeManager):
         print dt(), 'before big sql'
         for item in items:
             news_id = item.news_id
-            # print news_id
-            # print docs[news_id]
             if not i % 10000:
                 print dt(), 'loaded', i
             i += 1
-            # if docs[news_id] not in news_ids:
-            #     continue
             data.setdefault(news_id, dict())
-            # data[news_id].append(dict(word=item.word, weight=item.weight))
             data[news_id][item.word] = item.weight
             # if news_id > 50:
             #     break
@@ -333,33 +328,11 @@ class KeywordManager(LargeManager):
             doc1 = docs[news_id1]
             if not i % 10:
                 print dt(), 'news', i
-            # print dt(), news_id1
             for news_id2, news2 in data.items():
                 if news_id2 <= news_id1:
                     continue
                 doc2 = docs[news_id2]
-                # keys1 = dict(news1)
-                # keys2 = dict(news2)
-                # for key2 in keys2.keys():
-                #     if key2 not in keys1:
-                #         keys1[key2] = 0
-                # for key1 in keys1.keys():
-                #     if key1 not in keys2:
-                #         keys2[key1] = 0
-
-                # print '=' * 100
-                # for word, weight in keys1.items():
-                #     print "%.3f, %s" % (weight, word)
-                # print '=' * 100
-                # for word, weight in keys2.items():
-                #     print "%.3f, %s" % (weight, word)
-                # print
-                # if j > 0:
-                #     break
-                # print len(keys1), len(keys2)
-                abs1 = 0
-                abs2 = 0
-                mult = 0
+                abs1 = abs2 = mult = 0
                 for key in news1.keys() + news2.keys():
                     val1 = news1.get(key, 0)
                     val2 = news2.get(key, 0)
@@ -367,22 +340,14 @@ class KeywordManager(LargeManager):
                     abs2 += val2 ** 2
                     mult += val1 * val2
                 cos = mult / (math.sqrt(abs1) * math.sqrt(abs2))
-                results.append(CosResultSeveral(news_1_id=news_id1, doc_1=doc1,
-                                         news_2_id=news_id2, doc_2=doc2,
-                                         cos=cos))
-                # results.append(CosResult(news_1_id=news_id2,
-                #                          news_2_id=news_id1, cos=cos))
+                results.append(CosResultSeveral(
+                    news_1_id=news_id1, doc_1=doc1,
+                    news_2_id=news_id2, doc_2=doc2, cos=cos))
                 j += 1
                 if not j % 10000:
                     CosResultSeveral.objects.bulk_create(results)
                     print dt(), 'added', j
                     results = []
-                # print news_id2, cos
-        # chunk_size = 10000
-        # processed = 0
-        # for chunk in chunks(results, chunk_size):
-        #     processed += len(CosResult.objects.bulk_create(chunk))
-        #     print dt(), '-> Processed:', processed
 
 
 class Keyword(models.Model):
