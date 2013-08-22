@@ -12,7 +12,7 @@ from xml.etree import ElementTree
 import math
 from libs.mystem import mystem
 from libs.tools import w2u, chunks, dt
-from libs.xmath import average_deviation, alpha_beta, DeviationError
+from libs.xmath import average_deviation, alpha_beta, DeviationError, vector_cos
 
 
 class LargeManager(models.Manager):
@@ -325,24 +325,15 @@ class KeywordManager(LargeManager):
         j = 0
         for news_id1, news1 in data.items():
             i += 1
-            doc1 = docs[news_id1]
             if not i % 10:
                 print dt(), 'news', i
             for news_id2, news2 in data.items():
                 if news_id2 <= news_id1:
                     continue
-                doc2 = docs[news_id2]
-                abs1 = abs2 = mult = 0
-                for key in news1.keys() + news2.keys():
-                    val1 = news1.get(key, 0)
-                    val2 = news2.get(key, 0)
-                    abs1 += val1 ** 2
-                    abs2 += val2 ** 2
-                    mult += val1 * val2
-                cos = mult / (math.sqrt(abs1) * math.sqrt(abs2))
+                cos = vector_cos(news1, news2)
                 results.append(CosResultSeveral(
-                    news_1_id=news_id1, doc_1=doc1,
-                    news_2_id=news_id2, doc_2=doc2, cos=cos))
+                    news_1_id=news_id1, doc_1=docs[news_id1],
+                    news_2_id=news_id2, doc_2=docs[news_id2], cos=cos))
                 j += 1
                 if not j % 10000:
                     CosResultSeveral.objects.bulk_create(results)

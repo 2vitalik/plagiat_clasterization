@@ -23,3 +23,15 @@ def average_deviation(values):
 
 def alpha_beta(value, average, deviation, alpha, beta):
     return average - alpha * deviation <= value <= average + beta * deviation
+
+
+def vector_cos(dict1, dict2):
+    abs1 = abs2 = mult = 0
+    all_keys = dict1.keys() + dict2.keys()
+    for key in all_keys:
+        val1 = dict1.get(key, 0)
+        val2 = dict2.get(key, 0)
+        abs1 += val1 ** 2
+        abs2 += val2 ** 2
+        mult += val1 * val2
+    return mult / (math.sqrt(abs1) * math.sqrt(abs2))
