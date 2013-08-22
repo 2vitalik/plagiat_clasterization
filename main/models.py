@@ -302,13 +302,16 @@ class KeywordManager(LargeManager):
             news_docs[news.doc_id] = news.pk
         data = dict()
         i = 0
-        doc_ids = set(doc_ids)
-        news_ids = []
-        for doc_id in doc_ids:
-            news_ids.append(news_docs[doc_id])
+        if doc_ids:
+            doc_ids = set(doc_ids)
+            news_ids = []
+            for doc_id in doc_ids:
+                news_ids.append(news_docs[doc_id])
+            items = self.filter(news_id__in=news_ids)
+        else:
+            items = self.iterate()
         print dt(), 'before big sql'
-        # for item in self.iterate():
-        for item in self.filter(news_id__in=news_ids):
+        for item in items:
             news_id = item.news_id
             # print news_id
             # print docs[news_id]
@@ -335,14 +338,15 @@ class KeywordManager(LargeManager):
                 if news_id2 <= news_id1:
                     continue
                 doc2 = docs[news_id2]
-                keys1 = dict(news1)
-                keys2 = dict(news2)
-                for key2 in keys2.keys():
-                    if key2 not in keys1:
-                        keys1[key2] = 0
-                for key1 in keys1.keys():
-                    if key1 not in keys2:
-                        keys2[key1] = 0
+                # keys1 = dict(news1)
+                # keys2 = dict(news2)
+                # for key2 in keys2.keys():
+                #     if key2 not in keys1:
+                #         keys1[key2] = 0
+                # for key1 in keys1.keys():
+                #     if key1 not in keys2:
+                #         keys2[key1] = 0
+
                 # print '=' * 100
                 # for word, weight in keys1.items():
                 #     print "%.3f, %s" % (weight, word)
@@ -356,9 +360,9 @@ class KeywordManager(LargeManager):
                 abs1 = 0
                 abs2 = 0
                 mult = 0
-                for key in keys1.keys():
-                    val1 = keys1[key]
-                    val2 = keys2[key]
+                for key in news1.keys() + news2.keys():
+                    val1 = news1.get(key, 0)
+                    val2 = news2.get(key, 0)
                     abs1 += val1 ** 2
                     abs2 += val2 ** 2
                     mult += val1 * val2
