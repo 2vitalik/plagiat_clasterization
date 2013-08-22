@@ -308,8 +308,14 @@ class KeywordManager(LargeManager):
             for doc_id in doc_ids:
                 news_ids.append(news_docs[doc_id])
             items = self.filter(news_id__in=news_ids)
+            last1 = last2 = 0
+            model = CosResultSeveral
         else:
+            last = CosResult.objects.order_by('-pk')[0]
+            last1 = last.news_1_id
+            last2 = last.news_2_id
             items = self.iterate()
+            model = CosResult
         print dt(), 'before big sql'
         for item in items:
             news_id = item.news_id
@@ -327,16 +333,20 @@ class KeywordManager(LargeManager):
             i += 1
             if not i % 10:
                 print dt(), 'news', i
+            if news_id1 < last1:
+                continue
             for news_id2, news2 in data.items():
                 if news_id2 <= news_id1:
                     continue
+                if last1 == news_id1 and news_id2 < last2:
+                    continue
                 cos = vector_cos(news1, news2)
-                results.append(CosResultSeveral(
-                    news_1_id=news_id1, doc_1=docs[news_id1],
-                    news_2_id=news_id2, doc_2=docs[news_id2], cos=cos))
+                results.append(model(news_1_id=news_id1, doc_1=docs[news_id1],
+                                     news_2_id=news_id2, doc_2=docs[news_id2],
+                                     cos=cos))
                 j += 1
                 if not j % 10000:
-                    CosResultSeveral.objects.bulk_create(results)
+                    model.objects.bulk_create(results)
                     print dt(), 'added', j
                     results = []
 
