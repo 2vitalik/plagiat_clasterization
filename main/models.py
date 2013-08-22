@@ -338,7 +338,7 @@ class KeywordManager(LargeManager):
             for news_id2, news2 in data.items():
                 if news_id2 <= news_id1:
                     continue
-                if last1 == news_id1 and news_id2 < last2:
+                if last1 == news_id1 and news_id2 <= last2:
                     continue
                 cos = vector_cos(news1, news2)
                 results.append(model(news_1_id=news_id1, doc_1=docs[news_id1],
@@ -349,6 +349,7 @@ class KeywordManager(LargeManager):
                     model.objects.bulk_create(results)
                     print dt(), 'added', j
                     results = []
+            gc.collect()
 
 
 class Keyword(models.Model):

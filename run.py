@@ -35,8 +35,9 @@ from main.models import News, NewsContent, NewsStemmed, NewsKeywords, Keyword
 # NewsKeywords.objects.create_keywords(alpha, beta)
 
 ## load clustered doc_ids
-doc_ids = read_lines('.conf/clustered.txt')
-doc_ids = map(int, doc_ids)
+# doc_ids = read_lines('.conf/clustered.txt')
+# doc_ids = map(int, doc_ids)
 
 ## calculate cosinuses
-Keyword.objects.calculate_cosinuses(doc_ids)
+# Keyword.objects.calculate_cosinuses(doc_ids)
+Keyword.objects.calculate_cosinuses()
