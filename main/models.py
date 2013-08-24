@@ -157,8 +157,8 @@ class NewsContent(models.Model):
 
     def create_paragraphs(self):
         paragraphs = self.content.split('\n')
-        return [NewsParagraph(news=self.news, paragraph=paragraph)
-                for paragraph in paragraphs]
+        return [NewsParagraph(news=self.news, order=i, paragraph=paragraphs[i])
+                for i in range(len(paragraphs))]
 
 
 class NewsStemmedManager(LargeManager):
@@ -390,4 +390,19 @@ class CosResultSeveral(models.Model):
 
 class NewsParagraph(models.Model):
     news = models.ForeignKey(News)
+    order = models.IntegerField(default=-1)
     paragraph = models.TextField()
+
+
+class ParagraphStemmed(models.Model):
+    paragraph = models.ForeignKey(NewsParagraph)
+    stemmed = models.TextField(blank=True)
+
+
+class ParagraphStats(models.Model):
+    news = models.ForeignKey(News)
+    word_count = models.IntegerField(default=0)
+    summa = models.IntegerField(default=0)
+    average = models.FloatField(default=0)
+    deviation = models.FloatField(default=0)
+
