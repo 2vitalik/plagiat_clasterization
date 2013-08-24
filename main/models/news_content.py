@@ -1,7 +1,6 @@
 # coding: utf-8
 from django.db import models
 from libs.tools import dt
-from main.models.news import News
 from main.models.paragraph import NewsParagraph
 from main.models.stemmed import CreateStemmedManager, NewsStemmed, AbstractCreateStemmedModel
 
@@ -22,7 +21,7 @@ class NewsContentManager(CreateStemmedManager):
 
 
 class NewsContent(AbstractCreateStemmedModel):
-    base = models.ForeignKey(News)
+    base = models.ForeignKey('main.News')
     objects = NewsContentManager(NewsStemmed)
 
     class Meta:

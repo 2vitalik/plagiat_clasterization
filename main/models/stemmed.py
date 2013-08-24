@@ -5,8 +5,6 @@ from libs.manager import LargeManager
 from libs.mystem import mystem
 from libs.tools import dt
 from main.models.keywords import NewsKeywords, ParagraphKeywords
-from main.models.news import News
-from main.models.paragraph import NewsParagraph
 
 
 class CreateStemmedManager(LargeManager):
@@ -89,6 +87,9 @@ class AbstractStemmedModel(models.Model):
     base = None
     stemmed = models.TextField(blank=True)
 
+    class Meta:
+        abstract = True
+
     def create_keywords(self):
         lines = self.stemmed.split('\n')
         keywords = []
@@ -112,7 +113,7 @@ class AbstractStemmedModel(models.Model):
 
 
 class NewsStemmed(AbstractStemmedModel):
-    base = models.ForeignKey(News)
+    base = models.ForeignKey('main.News')
     objects = CreateKeywordsManager(NewsKeywords)
 
     class Meta:
@@ -120,7 +121,7 @@ class NewsStemmed(AbstractStemmedModel):
 
 
 class ParagraphStemmed(AbstractStemmedModel):
-    base = models.ForeignKey(NewsParagraph)
+    base = models.ForeignKey('main.NewsParagraph')
     objects = CreateKeywordsManager(ParagraphKeywords)
 
     class Meta:
