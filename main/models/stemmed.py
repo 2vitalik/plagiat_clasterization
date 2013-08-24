@@ -111,7 +111,7 @@ class AbstractStemmedModel(models.Model):
             for word in set(forms):
                 keywords.append(word)
         keywords = ' '.join(keywords)
-        return self.keywords_model(news=self.base, keywords=keywords)
+        return self.keywords_model(base=self.base, keywords=keywords)
 
 
 class NewsStemmed(AbstractStemmedModel):

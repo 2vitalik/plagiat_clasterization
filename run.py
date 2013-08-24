@@ -8,35 +8,38 @@ os.chdir(path)
 sys.path.append(path)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plagiat_clasterization.settings")
 
-from main.models import News, NewsContent, NewsParagraph, NewsStemmed, NewsKeywords, Keyword
+from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
+    NewsKeywords, ParagraphStemmed, ParagraphKeywords
 
 ## create News and NewsContent
 # news_path = 'd:/www/giga/plagiat/news'
 # News.objects.load_from_folder(news_path)
 
-## create paragraphs
+## create NewsParagraph
 # NewsContent.objects.create_paragraphs()
 
-## create NewsStemmed
+## create NewsStemmed and ParagraphStemmed
 # NewsContent.objects.create_stems()
-NewsParagraph.objects.create_stems()
+# NewsParagraph.objects.create_stems()
 
-## create NewsKeyword
+## create NewsKeyword and ParagraphKeyword
 # NewsStemmed.objects.create_keywords()
+# ParagraphStemmed.objects.create_keywords()  # !!!
 
-## create NewsStats
+## create NewsStats and ParagraphStats
 # NewsKeywords.objects.create_stats()
+# ParagraphKeywords.objects.create_stats()
 
 ## gen_reports
 # coefficients = [(1, 2), (1, 3), (1, 4)]
 # for alpha, beta in coefficients:
 #     print dt(), 'alpha=%.2f, beta=%.2f' % (alpha, beta)
-#     NewsKeywords.objects.create_keywords(alpha, beta, gen_report=True)
+#     NewsKeywords.objects.create_keyword_items(alpha, beta, gen_report=True)
 
-## create keywords
-# alpha = 10
-# beta = 100
-# NewsKeywords.objects.create_keywords(alpha, beta)
+## create Keyword
+alpha = 10
+beta = 100
+NewsKeywords.objects.create_keyword_items(alpha, beta)
 
 ## load clustered doc_ids
 # doc_ids = read_lines('.conf/clustered.txt')
@@ -45,4 +48,3 @@ NewsParagraph.objects.create_stems()
 ## calculate cosinuses
 # Keyword.objects.calculate_cosinuses(doc_ids)
 # Keyword.objects.calculate_cosinuses()
-
