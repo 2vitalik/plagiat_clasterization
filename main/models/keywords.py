@@ -5,11 +5,14 @@ from django.db import models
 from libs.manager import LargeManager
 from libs.tools import dt
 from libs.xmath import average_deviation, DeviationError, alpha_beta
-from main.models import NewsStats, Keyword
 from main.models.news import News
 
 
 class NewsKeywordsManager(LargeManager):
+    def __init__(self, stats_model):
+        super(NewsKeywordsManager, self).__init__()
+        self.stats_model = stats_model  # NewsStats
+
     def create_stats(self):
         print dt(), '@ Create stats'
         i = 0
@@ -23,7 +26,7 @@ class NewsKeywordsManager(LargeManager):
             if stats:
                 items.append(stats)
         print dt(), '@ Adding stats to DB'
-        self.bulk(items, model=NewsStats, chunk_size=1000)
+        self.bulk(items, model=self.stats_model, chunk_size=1000)
 
     def create_keywords(self, alpha, beta, gen_report=False):
         print dt(), '@ Create keywords'

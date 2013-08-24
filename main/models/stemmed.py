@@ -2,6 +2,7 @@
 import re
 from django.db import models
 from libs.manager import LargeManager
+from libs.mystem import mystem
 from libs.tools import dt
 from main.models.keywords import NewsKeywords, ParagraphKeywords
 from main.models.news import News
@@ -25,6 +26,41 @@ class CreateStemmedManager(LargeManager):
             items.append(stemmed)
         print dt(), '@ Adding stems of DB'
         self.bulk(items, model=self.stemmed_model, chunk_size=50)
+
+
+class AbstractCreateStemmedModel(models.Model):
+    base = None
+    content = models.TextField()
+
+    class Meta:
+        abstract = True
+
+    def stem(self):
+        return mystem(self.content)
+
+    def create_stemmed(self):
+        stem = self.stem()
+        stemmed = []
+        lines = re.split('[\r\n]', stem)
+        lines = filter(str.strip, lines)  # удаление пустых строк
+        for line in lines:
+            word = line.strip()
+            if re.search(r'\\n|\\r|[_":;]', word):
+                # if re.search('[{}]', word):
+                #     print word
+                continue
+            if len(word) < 5:
+                continue
+            if re.search('.*\{.*\}', word) and not re.match('(.*)\{(.*)\}', word):
+                print '?', word
+            if not re.search('.*\{.*\}', word):
+                # print 'x', word
+                continue
+            word = re.sub('\(.*?\)', '', word)
+            word = re.sub('=[^=]*?([|}])', '\\1', word)
+            word = re.sub(',[^=]*?([|}])', '\\1', word)
+            stemmed.append(word)
+        return NewsStemmed(news=self.base, stemmed='\n'.join(stemmed))
 
 
 class CreateKeywordsManager(LargeManager):

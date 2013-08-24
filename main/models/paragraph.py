@@ -1,14 +1,16 @@
 from django.db import models
 from main.models.news import News
-from main.models.stemmed import CreateStemmedManager
+from main.models.stemmed import CreateStemmedManager, AbstractCreateStemmedModel, ParagraphStemmed
 
 
-class NewsParagraph(models.Model):
+class NewsParagraph(AbstractCreateStemmedModel):
     news = models.ForeignKey(News)
     order = models.IntegerField(default=-1)
-    paragraph = models.TextField()
-
-    objects = CreateStemmedManager()
+    objects = CreateStemmedManager(ParagraphStemmed)
 
     class Meta:
         app_label = 'main'
+
+    @property
+    def base(self):
+        return self
