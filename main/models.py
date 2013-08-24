@@ -26,6 +26,9 @@ class LargeManager(models.Manager):
                 yield row
             gc.collect()
 
+    # def bulk(self, model, chunk_size):
+    #     pass
+
 
 class NewsManager(LargeManager):
     def load_from_folder(self, news_path):
@@ -106,6 +109,26 @@ class NewsContentManager(LargeManager):
         for chunk in chunks(items, chunk_size):
             processed += len(NewsStemmed.objects.bulk_create(chunk))
             print dt(), '-> Processed:', processed
+
+    def create_paragraphs(self):
+        print dt(), '@ Creating paragraphs'
+        i = 0
+        items = []
+        for news in self.iterate():
+            i += 1
+            # if i > 500:
+            #     break
+            if not i % 100:
+                print dt(), '-> processed:', i
+            stemmed = news.create_stemmed()
+            items.append(stemmed)
+        print dt(), '@ Adding stems of DB'
+        chunk_size = 50
+        processed = 0
+        for chunk in chunks(items, chunk_size):
+            processed += len(NewsStemmed.objects.bulk_create(chunk))
+            print dt(), '-> Processed:', processed
+
 
 
 class NewsContent(models.Model):
@@ -231,6 +254,7 @@ class NewsKeywordsManager(LargeManager):
             news.create_keywords(alpha, beta, report)
         if gen_report:
             report.close()
+
 
 class NewsKeywords(models.Model):
     news = models.ForeignKey(News)
@@ -375,3 +399,9 @@ class CosResultSeveral(models.Model):
     doc_1 = models.IntegerField(default=0)
     doc_2 = models.IntegerField(default=0)
     cos = models.FloatField(default=-1, db_index=True)
+
+
+class NewsParagraph(models.Model):
+    news = models.ForeignKey(News)
+    order = models.IntegerField(default=0)
+    paragraph = models.TextField()
