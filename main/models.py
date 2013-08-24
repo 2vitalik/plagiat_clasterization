@@ -115,10 +115,10 @@ class NewsContentManager(LargeManager):
             #     break
             if not i % 100:
                 print dt(), '-> processed:', i
-            stemmed = news.create_stemmed()
-            items.append(stemmed)
+            paragraphs = news.create_paragraphs()
+            items += paragraphs
         print dt(), '@ Adding paragraphs of DB'
-        self.bulk(items, model=NewsParagraph, chunk_size=50)
+        self.bulk(items, model=NewsParagraph, chunk_size=100)
 
 
 class NewsContent(models.Model):
@@ -154,6 +154,11 @@ class NewsContent(models.Model):
             word = re.sub(',[^=]*?([|}])', '\\1', word)
             stemmed.append(word)
         return NewsStemmed(news=self.news, stemmed='\n'.join(stemmed))
+
+    def create_paragraphs(self):
+        paragraphs = self.content.split('\n')
+        return [NewsParagraph(news=self.news, paragraph=paragraph)
+                for paragraph in paragraphs]
 
 
 class NewsStemmedManager(LargeManager):
@@ -385,5 +390,4 @@ class CosResultSeveral(models.Model):
 
 class NewsParagraph(models.Model):
     news = models.ForeignKey(News)
-    order = models.IntegerField(default=0)
     paragraph = models.TextField()

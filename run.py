@@ -40,4 +40,6 @@ from main.models import News, NewsContent, NewsStemmed, NewsKeywords, Keyword
 
 ## calculate cosinuses
 # Keyword.objects.calculate_cosinuses(doc_ids)
-Keyword.objects.calculate_cosinuses()
+# Keyword.objects.calculate_cosinuses()
+
+NewsContent.objects.create_paragraphs()
