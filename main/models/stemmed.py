@@ -29,6 +29,7 @@ class CreateStemmedManager(LargeManager):
 class AbstractCreateStemmedModel(models.Model):
     base = None
     content = models.TextField()
+    stemmed_model = None
 
     class Meta:
         abstract = True
@@ -58,7 +59,7 @@ class AbstractCreateStemmedModel(models.Model):
             word = re.sub('=[^=]*?([|}])', '\\1', word)
             word = re.sub(',[^=]*?([|}])', '\\1', word)
             stemmed.append(word)
-        return NewsStemmed(news=self.base, stemmed='\n'.join(stemmed))
+        return self.stemmed_model(base=self.base, stemmed='\n'.join(stemmed))
 
 
 class CreateKeywordsManager(LargeManager):
@@ -86,6 +87,7 @@ class CreateKeywordsManager(LargeManager):
 class AbstractStemmedModel(models.Model):
     base = None
     stemmed = models.TextField(blank=True)
+    keywords_model = None
 
     class Meta:
         abstract = True
@@ -109,12 +111,13 @@ class AbstractStemmedModel(models.Model):
             for word in set(forms):
                 keywords.append(word)
         keywords = ' '.join(keywords)
-        return NewsKeywords(news=self.base, keywords=keywords)
+        return self.keywords_model(news=self.base, keywords=keywords)
 
 
 class NewsStemmed(AbstractStemmedModel):
     base = models.ForeignKey('main.News')
     objects = CreateKeywordsManager(NewsKeywords)
+    keywords_model = NewsKeywords
 
     class Meta:
         app_label = 'main'
@@ -123,6 +126,7 @@ class NewsStemmed(AbstractStemmedModel):
 class ParagraphStemmed(AbstractStemmedModel):
     base = models.ForeignKey('main.NewsParagraph')
     objects = CreateKeywordsManager(ParagraphKeywords)
+    keywords_model = ParagraphKeywords
 
     class Meta:
         app_label = 'main'

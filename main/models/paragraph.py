@@ -6,6 +6,7 @@ class NewsParagraph(AbstractCreateStemmedModel):
     news = models.ForeignKey('main.News')
     order = models.IntegerField(default=-1)
     objects = CreateStemmedManager(ParagraphStemmed)
+    stemmed_model = ParagraphStemmed
 
     class Meta:
         app_label = 'main'

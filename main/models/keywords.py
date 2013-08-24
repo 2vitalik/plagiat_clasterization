@@ -6,7 +6,7 @@ from django.db import models
 from libs.manager import LargeManager
 from libs.tools import dt
 from libs.xmath import average_deviation, DeviationError, alpha_beta, vector_cos
-from main.models.calculation import CosResultSeveral, CosResult, NewsStats
+from main.models.calculation import CosResultSeveral, CosResult, NewsStats, ParagraphStats
 
 
 class NewsKeywordsManager(LargeManager):
@@ -108,6 +108,10 @@ class NewsKeywords(AbstractKeywords):
 
 class ParagraphKeywords(AbstractKeywords):
     base = models.ForeignKey('main.NewsParagraph')
+    objects = NewsKeywordsManager(ParagraphStats)
+
+    class Meta:
+        app_label = 'main'
 
 
 class KeywordManager(LargeManager):

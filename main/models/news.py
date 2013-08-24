@@ -45,7 +45,7 @@ class NewsManager(LargeManager):
                     subject=data['subject'], agency=data['agency'],
                     date=data['date'], daytime=data['daytime'])
         news.save()
-        news_content = NewsContent(news=news, content=data['content'])
+        news_content = NewsContent(base=news, content=data['content'])
         return news_content
 
 
