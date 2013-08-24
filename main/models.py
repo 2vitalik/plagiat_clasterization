@@ -26,8 +26,11 @@ class LargeManager(models.Manager):
                 yield row
             gc.collect()
 
-    # def bulk(self, model, chunk_size):
-    #     pass
+    def bulk(self, items, model, chunk_size):
+        processed = 0
+        for chunk in chunks(items, chunk_size):
+            processed += len(model.objects.bulk_create(chunk))
+            print dt(), '-> Processed:', processed
 
 
 class NewsManager(LargeManager):
@@ -45,11 +48,7 @@ class NewsManager(LargeManager):
             items.append(news_content)
         print dt(), '-> Total entries:', len(items)
         print dt(), '@ Adding news_contests to DB'
-        chunk_size = 250
-        processed = 0
-        for chunk in chunks(items, chunk_size):
-            processed += len(NewsContent.objects.bulk_create(chunk))
-            print '-> Processed:', processed
+        self.bulk(items, model=NewsContent, chunk_size=250)
 
     def load_from_xml(self, filename):
         def fix_xml(text):
@@ -104,11 +103,7 @@ class NewsContentManager(LargeManager):
             stemmed = news.create_stemmed()
             items.append(stemmed)
         print dt(), '@ Adding stems of DB'
-        chunk_size = 50
-        processed = 0
-        for chunk in chunks(items, chunk_size):
-            processed += len(NewsStemmed.objects.bulk_create(chunk))
-            print dt(), '-> Processed:', processed
+        self.bulk(items, model=NewsStemmed, chunk_size=50)
 
     def create_paragraphs(self):
         print dt(), '@ Creating paragraphs'
@@ -122,13 +117,8 @@ class NewsContentManager(LargeManager):
                 print dt(), '-> processed:', i
             stemmed = news.create_stemmed()
             items.append(stemmed)
-        print dt(), '@ Adding stems of DB'
-        chunk_size = 50
-        processed = 0
-        for chunk in chunks(items, chunk_size):
-            processed += len(NewsStemmed.objects.bulk_create(chunk))
-            print dt(), '-> Processed:', processed
-
+        print dt(), '@ Adding paragraphs of DB'
+        self.bulk(items, model=NewsParagraph, chunk_size=50)
 
 
 class NewsContent(models.Model):
@@ -180,11 +170,7 @@ class NewsStemmedManager(LargeManager):
             news_keyword = news.create_keywords()
             items.append(news_keyword)
         print dt(), '@ Adding news_keywords to DB'
-        chunk_size = 250
-        processed = 0
-        for chunk in chunks(items, chunk_size):
-            processed += len(NewsKeywords.objects.bulk_create(chunk))
-            print dt(), '-> Processed:', processed
+        self.bulk(items, model=NewsKeywords, chunk_size=250)
 
 
 class NewsStemmed(models.Model):
@@ -234,11 +220,7 @@ class NewsKeywordsManager(LargeManager):
             if stats:
                 items.append(stats)
         print dt(), '@ Adding stats to DB'
-        chunk_size = 1000
-        processed = 0
-        for chunk in chunks(items, chunk_size):
-            processed += len(NewsStats.objects.bulk_create(chunk))
-            print dt(), '-> Processed:', processed
+        self.bulk(items, model=NewsStats, chunk_size=1000)
 
     def create_keywords(self, alpha, beta, gen_report=False):
         print dt(), '@ Create keywords'
