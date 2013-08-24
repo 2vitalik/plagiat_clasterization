@@ -1,15 +1,14 @@
 # coding: utf-8
 import re
 from django.db import models
-from libs.manager import LargeManager
 from libs.mystem import mystem
 from libs.tools import dt
-from main.models import NewsStemmed, NewsParagraph
 from main.models.news import News
+from main.models.paragraph import NewsParagraph
+from main.models.stemmed import CreateStemmedManager, NewsStemmed
 
 
-class NewsContentManager(LargeManager):
-
+class NewsContentManager(CreateStemmedManager):
     def create_paragraphs(self):
         print dt(), '@ Creating paragraphs'
         i = 0
@@ -30,7 +29,10 @@ class NewsContent(models.Model):
     news = models.ForeignKey(News)
     content = models.TextField()
 
-    objects = NewsContentManager()
+    objects = NewsContentManager(NewsStemmed)
+
+    class Meta:
+        app_label = 'main'
 
     def stem(self):
         return mystem(self.content)

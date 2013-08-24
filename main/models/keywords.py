@@ -47,6 +47,9 @@ class NewsKeywords(models.Model):
 
     objects = NewsKeywordsManager()
 
+    class Meta:
+        app_label = 'main'
+
     def create_stats(self):
         words = self.keywords.split(' ')
         data = Counter(words).most_common()
@@ -91,3 +94,8 @@ class NewsKeywords(models.Model):
                     # print self.news.doc_id, left, right, count, word
         if not report:
             Keyword.objects.bulk_create(keywords)
+
+
+class ParagraphKeywords(models.Model):
+    news = models.ForeignKey(News)
+    keywords = models.TextField(blank=True)

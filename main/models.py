@@ -100,17 +100,6 @@ class CosResultSeveral(models.Model):
     cos = models.FloatField(default=-1, db_index=True)
 
 
-class NewsParagraph(models.Model):
-    news = models.ForeignKey(News)
-    order = models.IntegerField(default=-1)
-    paragraph = models.TextField()
-
-
-class ParagraphStemmed(models.Model):
-    paragraph = models.ForeignKey(NewsParagraph)
-    stemmed = models.TextField(blank=True)
-
-
 class ParagraphStats(models.Model):
     news = models.ForeignKey(News)
     word_count = models.IntegerField(default=0)

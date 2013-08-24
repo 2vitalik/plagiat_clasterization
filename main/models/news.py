@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 from django.db import models
 from libs.manager import LargeManager
 from libs.tools import dt, w2u
-from main.models import NewsContent, News
+from main.models.news_content import NewsContent
 
 
 class NewsManager(LargeManager):
@@ -61,3 +61,6 @@ class News(models.Model):
     keywords = models.TextField(blank=True)
 
     objects = NewsManager()
+
+    class Meta:
+        app_label = 'main'

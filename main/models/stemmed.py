@@ -3,12 +3,15 @@ import re
 from django.db import models
 from libs.manager import LargeManager
 from libs.tools import dt
-from main.models import NewsKeywords
+from main.models.keywords import NewsKeywords, ParagraphKeywords
 from main.models.news import News
+from main.models.paragraph import NewsParagraph
 
 
 class CreateStemmedManager(LargeManager):
-    stemmed_model = NewsStemmed
+    def __init__(self, stemmed_model):
+        super(CreateStemmedManager, self).__init__()
+        self.stemmed_model = stemmed_model
 
     def create_stems(self):
         print dt(), '@ Creating stems of news'
@@ -24,51 +27,65 @@ class CreateStemmedManager(LargeManager):
         self.bulk(items, model=self.stemmed_model, chunk_size=50)
 
 
-class NewsStemmedManager(LargeManager):
+class CreateKeywordsManager(LargeManager):
+    def __init__(self, keywords_model):
+        super(CreateKeywordsManager, self).__init__()
+        self.keywords_model = keywords_model
+
     def create_keywords(self):
         print dt(), '@ Extract list of valid keywords from stemmed data'
         i = 0
         items = []
         for news in self.iterate(100):
             i += 1
-            # if i > 500:
-            #     break
             if not i % 500:
                 print dt(), '-> processed:', i
             news_keyword = news.create_keywords()
             items.append(news_keyword)
         print dt(), '@ Adding news_keywords to DB'
-        self.bulk(items, model=NewsKeywords, chunk_size=250)
+        self.bulk(items, model=self.keywords_model, chunk_size=250)
+
+    class Meta:
+        abstract = True
 
 
-class NewsStemmed(models.Model):
-    news = models.ForeignKey(News)
+class AbstractStemmedModel(models.Model):
+    base = None
     stemmed = models.TextField(blank=True)
 
-    objects = NewsStemmedManager()
-
     def create_keywords(self):
-        # print self.news_id
         lines = self.stemmed.split('\n')
         keywords = []
         for line in lines:
-            # print line
             m = re.match('(.*)\{(.*)\}', line)
             stem = m.group(2)
             items = stem.split('|')
             forms = []
             for item in items:
                 try:
-                    # print item
                     word, word_type = item.split('=')
                 except ValueError:
                     word, word_type = item, '?'
-                # print word_type
                 if word_type in ['S', 'V', 'A', 'ADV']:
                     forms.append(word)
                     break  # use only first form
             for word in set(forms):
                 keywords.append(word)
-        # print keywords
         keywords = ' '.join(keywords)
-        return NewsKeywords(news=self.news, keywords=keywords)
+        return NewsKeywords(news=self.base, keywords=keywords)
+
+
+class NewsStemmed(AbstractStemmedModel):
+    base = models.ForeignKey(News)
+    objects = CreateKeywordsManager(NewsKeywords)
+
+    class Meta:
+        app_label = 'main'
+
+
+class ParagraphStemmed(AbstractStemmedModel):
+    base = models.ForeignKey(NewsParagraph)
+    objects = CreateKeywordsManager(ParagraphKeywords)
+
+    class Meta:
+        app_label = 'main'
