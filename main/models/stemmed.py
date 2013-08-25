@@ -96,6 +96,8 @@ class AbstractStemmedModel(models.Model):
         lines = self.stemmed.split('\n')
         keywords = []
         for line in lines:
+            if not line:
+                continue
             m = re.match('(.*)\{(.*)\}', line)
             stem = m.group(2)
             items = stem.split('|')

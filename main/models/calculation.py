@@ -53,13 +53,8 @@ class CosResultSeveral(models.Model):
 
 
 class KeywordItemManager(LargeManager):
-    def calculate_cosinuses(self, doc_ids=None):
+    def calculate_cosinuses(self, docs, news_docs, doc_ids=None):
         print dt(), 'calculate_cosinuses'
-        docs = dict()
-        news_docs = dict()
-        for news in News.objects.only('doc_id'):
-            docs[news.pk] = news.doc_id
-            news_docs[news.doc_id] = news.pk
         data = dict()
         i = 0
         if doc_ids:
@@ -67,7 +62,7 @@ class KeywordItemManager(LargeManager):
             news_ids = []
             for doc_id in doc_ids:
                 news_ids.append(news_docs[doc_id])
-            items = self.filter(news_id__in=news_ids)
+            items = self.filter(base_id__in=news_ids)
             last1 = last2 = 0
             model = CosResultSeveral
         else:
@@ -78,7 +73,8 @@ class KeywordItemManager(LargeManager):
             model = CosResult
         print dt(), 'before big sql'
         for item in items:
-            news_id = item.news_id
+            # news_id = item.news_id
+            news_id = item.base.pk
             if not i % 10000:
                 print dt(), 'loaded', i
             i += 1

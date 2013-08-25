@@ -9,7 +9,7 @@ sys.path.append(path)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plagiat_clasterization.settings")
 
 from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
-    NewsKeywords, ParagraphStemmed, ParagraphKeywords
+    NewsKeywords, ParagraphStemmed, ParagraphKeywords, NewsKeywordItem
 
 ## create News and NewsContent
 # news_path = 'd:/www/giga/plagiat/news'
@@ -24,9 +24,9 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 
 ## create NewsKeyword and ParagraphKeyword
 # NewsStemmed.objects.create_keywords()
-# ParagraphStemmed.objects.create_keywords()  # !!!
+# ParagraphStemmed.objects.create_keywords()
 
-## create NewsStats and ParagraphStats
+# create NewsStats and ParagraphStats
 # NewsKeywords.objects.create_stats()
 # ParagraphKeywords.objects.create_stats()
 
@@ -36,15 +36,21 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 #     print dt(), 'alpha=%.2f, beta=%.2f' % (alpha, beta)
 #     NewsKeywords.objects.create_keyword_items(alpha, beta, gen_report=True)
 
-## create Keyword
-alpha = 10
-beta = 100
-NewsKeywords.objects.create_keyword_items(alpha, beta)
+## create NewsKeywordItem and ParagraphKeywordItem
+# alpha = 10
+# beta = 100
+# NewsKeywords.objects.create_keyword_items(alpha, beta)
+# ParagraphKeywords.objects.create_keyword_items(alpha, beta)
 
 ## load clustered doc_ids
-# doc_ids = read_lines('.conf/clustered.txt')
-# doc_ids = map(int, doc_ids)
+doc_ids = read_lines('.conf/clustered.txt')
+doc_ids = map(int, doc_ids)
 
 ## calculate cosinuses
-# Keyword.objects.calculate_cosinuses(doc_ids)
+docs = dict()
+news_docs = dict()
+for news in News.objects.only('doc_id'):
+    docs[news.pk] = news.doc_id
+    news_docs[news.doc_id] = news.pk
+NewsKeywordItem.objects.calculate_cosinuses(docs, news_docs, doc_ids)
 # Keyword.objects.calculate_cosinuses()
