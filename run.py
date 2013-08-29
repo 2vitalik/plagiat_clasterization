@@ -9,7 +9,7 @@ sys.path.append(path)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plagiat_clasterization.settings")
 
 from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
-    NewsKeywords, ParagraphStemmed, ParagraphKeywords, NewsKeywordItem
+    NewsKeywords, ParagraphStemmed, ParagraphKeywords, NewsKeywordItem, ParagraphKeywordItem
 
 ## create News and NewsContent
 # news_path = 'd:/www/giga/plagiat/news'
@@ -37,20 +37,21 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 #     NewsKeywords.objects.create_keyword_items(alpha, beta, gen_report=True)
 
 ## create NewsKeywordItem and ParagraphKeywordItem
-# alpha = 10
-# beta = 100
+alpha = 10
+beta = 100
 # NewsKeywords.objects.create_keyword_items(alpha, beta)
-# ParagraphKeywords.objects.create_keyword_items(alpha, beta)
+ParagraphKeywords.objects.create_keyword_items(alpha, beta)
 
-## load clustered doc_ids
-doc_ids = read_lines('.conf/clustered.txt')
-doc_ids = map(int, doc_ids)
+## calculate cosinuses for news
+# doc_ids = read_lines('.conf/clustered.txt')  # load clustered doc_ids
+# doc_ids = map(int, doc_ids)
+# docs = dict()
+# news_docs = dict()
+# for news in News.objects.only('doc_id'):
+#     docs[news.pk] = news.doc_id
+#     news_docs[news.doc_id] = news.pk
+# NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_docs, doc_ids)
+# NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_docs)
 
-## calculate cosinuses
-docs = dict()
-news_docs = dict()
-for news in News.objects.only('doc_id'):
-    docs[news.pk] = news.doc_id
-    news_docs[news.doc_id] = news.pk
-NewsKeywordItem.objects.calculate_cosinuses(docs, news_docs, doc_ids)
-# Keyword.objects.calculate_cosinuses()
+## calculate cosinuses for paragraphs
+ParagraphKeywordItem.objects.paragraph_calculate_cosinuses()

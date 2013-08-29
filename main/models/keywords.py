@@ -86,8 +86,12 @@ class AbstractKeywords(models.Model):
             weight = float(count) / stats.summa
             if alpha_beta(count, stats.average, stats.deviation, alpha, beta):
                 if not report:
+                    kwargs = {}
+                    if self.keyword_item_model == ParagraphKeywordItem:
+                        kwargs['news'] = self.base.news
                     keyword = self.keyword_item_model(
-                        base=self.base, word=word, count=count, weight=weight)
+                        base=self.base, word=word, count=count, weight=weight,
+                        **kwargs)
                     keywords.append(keyword)
             if report:
                 if count < left:
