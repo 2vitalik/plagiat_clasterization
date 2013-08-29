@@ -1,6 +1,5 @@
 import gc
 from django.db import models
-from sqlalchemy.types import LargeBinary
 from libs.manager import LargeManager
 from libs.tools import dt
 from libs.xmath import vector_cos
@@ -56,9 +55,44 @@ class CosResultSeveral(models.Model):
 
 
 class ParagraphCosResult(models.Model):
+    news_1 = models.ForeignKey('main.News', related_name='paragraph_cos_1')
+    news_2 = models.ForeignKey('main.News', related_name='paragraph_cos_2')
     paragraph_1 = models.ForeignKey('main.NewsParagraph', related_name='cos_1')
     paragraph_2 = models.ForeignKey('main.NewsParagraph', related_name='cos_2')
     cos = models.FloatField(default=-1, db_index=True)
+
+    class Meta:
+        app_label = 'main'
+
+
+class ParagraphCosResultSeveral(models.Model):
+    news_1 = models.ForeignKey('main.News', related_name='paragraph_cos_1s')
+    news_2 = models.ForeignKey('main.News', related_name='paragraph_cos_2s')
+    paragraph_1 = models.ForeignKey('main.NewsParagraph', related_name='cos_1s')
+    paragraph_2 = models.ForeignKey('main.NewsParagraph', related_name='cos_2s')
+    cos = models.FloatField(default=-1, db_index=True)
+
+    class Meta:
+        app_label = 'main'
+
+
+class CosResultAfterParagraph(models.Model):
+    news_1 = models.ForeignKey('main.News', related_name='good_cos_1')
+    news_2 = models.ForeignKey('main.News', related_name='good_cos_2')
+    cos = models.FloatField(default=-1, db_index=True)
+    doc_1 = models.IntegerField(default=0)
+    doc_2 = models.IntegerField(default=0)
+
+    class Meta:
+        app_label = 'main'
+
+
+class CosResultAfterParagraphSeveral(models.Model):
+    news_1 = models.ForeignKey('main.News', related_name='good_cos_1s')
+    news_2 = models.ForeignKey('main.News', related_name='good_cos_2s')
+    cos = models.FloatField(default=-1, db_index=True)
+    doc_1 = models.IntegerField(default=0)
+    doc_2 = models.IntegerField(default=0)
 
     class Meta:
         app_label = 'main'
@@ -130,6 +164,8 @@ class NewsKeywordItemManager(LargeManager):
                     print dt(), 'added', j
                     results = []
             gc.collect()
+        model.objects.bulk_create(results)
+        print dt(), 'added', j
 
 
 class NewsKeywordItem(AbstractKeywordItem):
@@ -141,62 +177,95 @@ class NewsKeywordItem(AbstractKeywordItem):
 
 
 class ParagraphKeywordItemManager(LargeManager):
-    def paragraph_calculate_cosinuses(self, min_cos):
+    def paragraph_calculate_cosinuses(self, docs, min_cos, several=True):
         print dt(), 'calculate_cosinuses'
         data = dict()
         i = 0
-        last1 = last2 = 0
-        last = CosResult.objects.order_by('-pk')
-        if last:
-            last = last[0]
-            last1 = last.news_1_id
-            last2 = last.news_2_id
+        # last1 = last2 = 0
+        # last = CosResult.objects.order_by('-pk')
+        # if last:
+        #     last = last[0]
+        #     last1 = last.news_1_id
+        #     last2 = last.news_2_id
         # items = CosResult.objects.iterate()
-        items = CosResult.objects.filter(cos__gt=min_cos)
-        print dt(), 'before filter by min_cos'
+        if several:
+            cos_results_model = CosResultSeveral
+            paragraph_cos_results_model = ParagraphCosResultSeveral
+            good_cos_results_model = CosResultAfterParagraphSeveral
+        else:
+            cos_results_model = CosResult
+            paragraph_cos_results_model = ParagraphCosResult
+            good_cos_results_model = CosResultAfterParagraph
+        items = cos_results_model.objects.filter(cos__gt=min_cos)
+        print dt(), '-> filter by min_cos (and getting news)'
         pairs = list()
         news_ids = list()
         for item in items:
             # if item.cos < min_news_cos:
             #     continue
-            pairs.append((item.news_1_id, item.news_2_id))
+            pairs.append((item.news_1_id, item.news_2_id, item.cos))
             news_ids.append(item.news_1_id)
             news_ids.append(item.news_2_id)
         news_ids = set(news_ids)
+        print dt(), '-> filter paragraph keyword items by that news'
+        items = ParagraphKeywordItem.objects.filter(news_id__in=news_ids)
         for item in items:
-            # news_id = item.news_id
-            base_id = item.base.pk
-            if not i % 1000:
-                print dt(), 'loaded', i
+            news_id = item.news_id
+            paragraph_id = item.base_id
+            if not i % 10000:
+                print dt(), '   loaded keywords:', i
             i += 1
-            data.setdefault(base_id, dict())
-            data[base_id][item.word] = item.weight
+            data.setdefault(news_id, dict())
+            data[news_id].setdefault(paragraph_id, dict())
+            data[news_id][paragraph_id][item.word] = item.weight
             # if news_id > 50:
             #     break
+        print dt(), '   loaded keywords:', i
         results = []
-        i = 0
-        j = 0
-        for news_id1, news1 in data.items():
+        i = j = p = 0
+        pairs_ok = list()
+        print dt(), '-> processing all pairs:', len(pairs)
+        for news_id_1, news_id_2, news_cos in pairs:
+            pair_ok = False
             i += 1
             if not i % 10:
-                print dt(), 'news', i
-            if news_id1 < last1:
-                continue
-            for news_id2, news2 in data.items():
-                if news_id2 <= news_id1:
-                    continue
-                if last1 == news_id1 and news_id2 <= last2:
-                    continue
-                cos = vector_cos(news1, news2)
-                results.append(ParagraphCosResult(
-                    paragraph_1_id=news_id1,
-                    paragraph_2_id=news_id2, cos=cos))
-                j += 1
-                if not j % 10000:
-                    ParagraphCosResult.objects.bulk_create(results)
-                    print dt(), 'added', j
-                    results = []
-            gc.collect()
+                print dt(), '   processed pairs: ', i
+            for paragraph_id_1, paragraph_1 in data[news_id_1].items():
+                # if news_id1 < last1:
+                #     continue
+                for paragraph_id_2, paragraph_2 in data[news_id_2].items():
+                    if paragraph_id_2 <= paragraph_id_1:
+                        continue
+                    # if last1 == news_id1 and news_id2 <= last2:
+                    #     continue
+                    cos = vector_cos(paragraph_1, paragraph_2)
+                    results.append(paragraph_cos_results_model(
+                        news_1_id=news_id_1, paragraph_1_id=paragraph_id_1,
+                        news_2_id=news_id_2, paragraph_2_id=paragraph_id_2,
+                        cos=cos))
+                    if cos > min_cos:
+                        pair_ok = True
+                    # todo: calc and save max paragraph cos
+                    j += 1
+                    if not j % 10000:
+                        paragraph_cos_results_model.objects.bulk_create(results)
+                        print dt(), '   paragraph cos added:', j
+                        results = []
+                gc.collect()
+            if pair_ok:
+                p += 1
+                pairs_ok.append(good_cos_results_model(
+                    news_1_id=news_id_1, news_2_id=news_id_2,
+                    doc_1=docs[news_id_1], doc_2=docs[news_id_2],
+                    cos=news_cos))
+                if not p % 100:
+                    good_cos_results_model.objects.bulk_create(pairs_ok)
+                    print dt(), '   good pairs of news added:', p
+                    pairs_ok = []
+        paragraph_cos_results_model.objects.bulk_create(results)
+        print dt(), '-> paragraph cos added:', j
+        good_cos_results_model.objects.bulk_create(pairs_ok)
+        print dt(), '-> good pairs of news added:', p
 
 
 class ParagraphKeywordItem(AbstractKeywordItem):
