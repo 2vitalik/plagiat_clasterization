@@ -37,10 +37,12 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 #     NewsKeywords.objects.create_keyword_items(alpha, beta, gen_report=True)
 
 ## create NewsKeywordItem and ParagraphKeywordItem
-alpha = 10
-beta = 100
+# alpha = 10
+# beta = 100
 # NewsKeywords.objects.create_keyword_items(alpha, beta)
-ParagraphKeywords.objects.create_keyword_items(alpha, beta)
+# ParagraphKeywords.objects.create_keyword_items(alpha, beta)
+
+# todo: third mode: all news that intersects with 704
 
 ## calculate cosinuses for news
 # doc_ids = read_lines('.conf/clustered.txt')  # load clustered doc_ids
@@ -54,4 +56,12 @@ ParagraphKeywords.objects.create_keyword_items(alpha, beta)
 # NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_docs)
 
 ## calculate cosinuses for paragraphs
-ParagraphKeywordItem.objects.paragraph_calculate_cosinuses()
+docs = dict()
+for news in News.objects.only('doc_id'):
+    docs[news.pk] = news.doc_id
+# ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7)
+ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7, several=False)
+
+# todo: stop-words
+
+# todo: calc all cosinuses and then try to check different coefficient "d"
