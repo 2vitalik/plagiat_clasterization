@@ -1,3 +1,4 @@
+# coding: utf-8
 import os
 import sys
 from libs.file import read_lines
@@ -21,6 +22,8 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 ## create NewsStemmed and ParagraphStemmed
 # NewsContent.objects.create_stems()
 # NewsParagraph.objects.create_stems()
+
+# todo: "злой" вариант фильтрации частей речи
 
 ## create NewsKeyword and ParagraphKeyword
 # NewsStemmed.objects.create_keywords()
