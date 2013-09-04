@@ -14,24 +14,25 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 
 ## create News and NewsContent
 # news_path = 'd:/www/giga/plagiat/news'
+# news_path = '/home/user/tmp/news/news'
 # News.objects.load_from_folder(news_path)
 
 ## create NewsParagraph
 # NewsContent.objects.create_paragraphs()
 
 ## create NewsStemmed and ParagraphStemmed
-# NewsContent.objects.create_stems()
-# NewsParagraph.objects.create_stems()
+NewsContent.objects.create_stems()
+NewsParagraph.objects.create_stems()
 
 # todo: "злой" вариант фильтрации частей речи
 
 ## create NewsKeyword and ParagraphKeyword
-# NewsStemmed.objects.create_keywords()
-# ParagraphStemmed.objects.create_keywords()
+NewsStemmed.objects.create_keywords()
+ParagraphStemmed.objects.create_keywords()
 
 # create NewsStats and ParagraphStats
-# NewsKeywords.objects.create_stats()
-# ParagraphKeywords.objects.create_stats()
+NewsKeywords.objects.create_stats()
+ParagraphKeywords.objects.create_stats()
 
 ## gen_reports
 # coefficients = [(1, 2), (1, 3), (1, 4)]
@@ -40,10 +41,10 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 #     NewsKeywords.objects.create_keyword_items(alpha, beta, gen_report=True)
 
 ## create NewsKeywordItem and ParagraphKeywordItem
-# alpha = 10
-# beta = 100
-# NewsKeywords.objects.create_keyword_items(alpha, beta)
-# ParagraphKeywords.objects.create_keyword_items(alpha, beta)
+alpha = 10
+beta = 100
+NewsKeywords.objects.create_keyword_items(alpha, beta)
+ParagraphKeywords.objects.create_keyword_items(alpha, beta)
 
 # todo: third mode: all news that intersects with 704
 
@@ -59,11 +60,11 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 # NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_docs)
 
 ## calculate cosinuses for paragraphs
-docs = dict()
-for news in News.objects.only('doc_id'):
-    docs[news.pk] = news.doc_id
-# ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7)
-ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7, several=False)
+# docs = dict()
+# for news in News.objects.only('doc_id'):
+#     docs[news.pk] = news.doc_id
+# # ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7)
+# ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7, several=False)
 
 # todo: stop-words
 
