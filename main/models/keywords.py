@@ -28,16 +28,25 @@ class NewsKeywordsManager(LargeManager):
         print dt(), '@ Adding stats to DB'
         self.bulk(items, model=self.stats_model, chunk_size=1000)
 
-    def create_keyword_items(self, alpha, beta, gen_report=False):
+    def create_keyword_items(self, alpha, beta, news_docs=None, doc_ids=None,
+                             gen_report=False):
         print dt(), '@ Create keywords'
         i = 0
         report = None
         if gen_report:
             report_name = '.results/filter_ab_%.2f_%.2f.txt' % (alpha, beta)
             report = open(report_name, 'w')
-        for news in self.iterate():
+        if doc_ids and news_docs:
+            doc_ids = set(doc_ids)
+            news_ids = []
+            for doc_id in doc_ids:
+                news_ids.append(news_docs[doc_id])
+            items = self.filter(base_id__in=news_ids)
+        else:
+            items = self.iterate()
+        for news in items:
             i += 1
-            if not i % 1000:
+            if not i % 100:
                 print dt(), '-> processed:', i
             news.create_keyword_items(alpha, beta, report)
         if gen_report:

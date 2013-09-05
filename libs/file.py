@@ -1,7 +1,11 @@
+import re
 
 
-def read_lines(filename):
-    return open(filename).read().split('\n')
+def read_lines(filename, decode=None):
+    lines = re.split(r'[\n\r]+', open(filename).read())
+    if decode:
+        lines = map(lambda x: x.decode(decode), lines)
+    return lines
 
 
 def save_file(filename, content, encode=None):

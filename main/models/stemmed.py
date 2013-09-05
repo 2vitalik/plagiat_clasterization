@@ -67,16 +67,19 @@ class CreateKeywordsManager(LargeManager):
         super(CreateKeywordsManager, self).__init__()
         self.keywords_model = keywords_model
 
-    def create_keywords(self):
+    def create_keywords(self, stop_words=None, angry_mode=False):
         print dt(), '@ Extract list of valid keywords from stemmed data'
         i = 0
         items = []
         for news in self.iterate(100):
             i += 1
+            # if i < 24:
+            #     continue
             if not i % 500:
                 print dt(), '-> processed:', i
-            news_keyword = news.create_keywords()
+            news_keyword = news.create_keywords(stop_words, angry_mode)
             items.append(news_keyword)
+            # break
         print dt(), '@ Adding news_keywords to DB'
         self.bulk(items, model=self.keywords_model, chunk_size=250)
 
@@ -92,7 +95,7 @@ class AbstractStemmedModel(models.Model):
     class Meta:
         abstract = True
 
-    def create_keywords(self):
+    def create_keywords(self, stop_words=None, angry_mode=False):
         lines = self.stemmed.split('\n')
         keywords = []
         for line in lines:
@@ -102,15 +105,26 @@ class AbstractStemmedModel(models.Model):
             stem = m.group(2)
             items = stem.split('|')
             forms = []
+            word = '#'  # this value will never be used
+            valid_word_type = True
             for item in items:
                 try:
                     word, word_type = item.split('=')
                 except ValueError:
                     word, word_type = item, '?'
-                if word_type in ['S', 'V', 'A', 'ADV']:
+                if angry_mode:
+                    if word_type not in ['S', 'V', 'A', 'ADV']:
+                        valid_word_type = False
+                else:
+                    if word_type in ['S', 'V', 'A', 'ADV']:
+                        forms.append(word)
+                        break  # use only first form
+            if angry_mode:
+                if valid_word_type:
                     forms.append(word)
-                    break  # use only first form
             for word in set(forms):
+                if stop_words and word in stop_words:
+                    continue
                 keywords.append(word)
         keywords = ' '.join(keywords)
         return self.keywords_model(base=self.base, keywords=keywords)
