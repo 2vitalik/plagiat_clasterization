@@ -10,7 +10,8 @@ sys.path.append(path)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plagiat_clasterization.settings")
 
 from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
-    NewsKeywords, ParagraphStemmed, ParagraphKeywords, NewsKeywordItem, ParagraphKeywordItem
+    NewsKeywords, ParagraphStemmed, ParagraphKeywords, NewsKeywordItem, \
+    ParagraphKeywordItem
 
 ## create News and NewsContent
 # news_path = 'd:/www/giga/plagiat/news'

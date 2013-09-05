@@ -197,7 +197,8 @@ class ParagraphKeywordItemManager(LargeManager):
             paragraph_cos_results_model = ParagraphCosResult
             good_cos_results_model = CosResultAfterParagraph
         # todo: get all (!!!) pairs (except cos=0 and cos>0.95)
-        items = cos_results_model.objects.filter(cos__gt=min_cos)
+        # items = cos_results_model.objects.filter(cos__gt=min_cos)
+        items = cos_results_model.objects.exclude(cos=0).exclude(cos=1)
         print dt(), '-> filter by min_cos (and getting news)'
         pairs = list()
         news_ids = list()
