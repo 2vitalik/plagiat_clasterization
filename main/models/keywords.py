@@ -97,9 +97,11 @@ class AbstractKeywords(models.Model):
                 if count < left:
                     report.write(" [<] %d - %s\n" % (count, word.encode('cp1251')))
                     # print self.news.doc_id, left, right, count, word
-                if count > right:
+                elif count > right:
                     report.write(" [>] %d - %s\n" % (count, word.encode('cp1251')))
                     # print self.news.doc_id, left, right, count, word
+                else:
+                    report.write(" [=] %d - %s\n" % (count, word.encode('cp1251')))
         if not report:
             self.keyword_item_model.objects.bulk_create(keywords)
 
