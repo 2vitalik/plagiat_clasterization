@@ -14,26 +14,26 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
     ParagraphKeywordItem
 
 ## create News and NewsContent
-# news_path = 'd:/www/giga/plagiat/news'
+news_path = 'd:/www/giga/plagiat/news'
 # news_path = '/home/user/tmp/news/news'
-# News.objects.load_from_folder(news_path)
+News.objects.load_from_folder(news_path)
 
 ## create NewsParagraph
-# NewsContent.objects.create_paragraphs()
+NewsContent.objects.create_paragraphs()
 
 ## create NewsStemmed and ParagraphStemmed
-# NewsContent.objects.create_stems()
-# NewsParagraph.objects.create_stems()
+NewsContent.objects.create_stems()
+NewsParagraph.objects.create_stems()
 
 stop_words = read_lines('.conf/stop_words.txt', 'cp1251')
 
 ## create NewsKeyword and ParagraphKeyword
-# NewsStemmed.objects.create_keywords(stop_words, angry_mode=True)
-# ParagraphStemmed.objects.create_keywords(stop_words, angry_mode=True)
+NewsStemmed.objects.create_keywords(stop_words, angry_mode=True)
+ParagraphStemmed.objects.create_keywords(stop_words, angry_mode=True)
 
 # create NewsStats and ParagraphStats
-# NewsKeywords.objects.create_stats()
-# ParagraphKeywords.objects.create_stats()
+NewsKeywords.objects.create_stats()
+ParagraphKeywords.objects.create_stats()
 
 ## gen_reports
 # coefficients = [(1, 2), (1, 3), (1, 4)]
@@ -59,7 +59,7 @@ NewsKeywords.objects.create_keyword_items(alpha, beta, news_docs, doc_ids)
 # todo: third mode: all news that intersects with 704
 
 ## calculate cosinuses for news
-# NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_docs, doc_ids)
+NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_docs, doc_ids)
 # NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_docs)
 
 ## calculate cosinuses for paragraphs

@@ -2,7 +2,8 @@
 from django.db import models
 from libs.tools import dt
 from main.models.paragraph import NewsParagraph
-from main.models.stemmed import CreateStemmedManager, NewsStemmed, AbstractCreateStemmedModel
+from main.models.stemmed import CreateStemmedManager, NewsStemmed, \
+    AbstractCreateStemmedModel
 
 
 class NewsContentManager(CreateStemmedManager):

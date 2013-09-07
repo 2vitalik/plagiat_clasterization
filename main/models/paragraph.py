@@ -1,5 +1,6 @@
 from django.db import models
-from main.models.stemmed import CreateStemmedManager, AbstractCreateStemmedModel, ParagraphStemmed
+from main.models.stemmed import CreateStemmedManager, \
+    AbstractCreateStemmedModel, ParagraphStemmed
 
 
 class NewsParagraph(AbstractCreateStemmedModel):
