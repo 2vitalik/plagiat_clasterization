@@ -70,3 +70,5 @@ NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_docs, doc_ids)
 # ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7, several=False)
 
 # todo: calc all cosinuses and then try to check different coefficient "d"
+
+# just for fun :)
