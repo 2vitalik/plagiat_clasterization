@@ -87,9 +87,9 @@ class AbstractKeywords(models.Model):
         left = stats.average - alpha * stats.deviation
         right = stats.average + beta * stats.deviation
         if report:
-            report.write("\n#%d: (avg=%.2f, s=%.2f): [%.2f, %.2f]\n" %
-                         (self.base.doc_id, stats.average, stats.deviation,
-                          left, right))
+            report.write("\n%s \n#%d: (avg=%.2f, s=%.2f): [%.2f, %.2f]\n" %
+                         (self.base.subject.encode('cp1251'), self.base.doc_id, \
+                          stats.average, stats.deviation, left, right))
         keywords = []
         for word, count in data:
             weight = float(count) / stats.summa
