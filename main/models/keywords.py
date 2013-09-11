@@ -9,9 +9,9 @@ from main.models.calculation import NewsKeywordItem, ParagraphKeywordItem
 from main.models.calculation import NewsStats, ParagraphStats
 
 
-class NewsKeywordsManager(LargeManager):
+class AbstractKeywordsManager(LargeManager):
     def __init__(self, stats_model):
-        super(NewsKeywordsManager, self).__init__()
+        super(AbstractKeywordsManager, self).__init__()
         self.stats_model = stats_model
 
     def create_stats(self):
@@ -27,30 +27,6 @@ class NewsKeywordsManager(LargeManager):
                 items.append(stats)
         print dt(), '@ Adding stats to DB'
         self.bulk(items, model=self.stats_model, chunk_size=1000)
-
-    def create_keyword_items(self, alpha, beta, news_docs=None, doc_ids=None,
-                             gen_report=False):
-        print dt(), '@ Create keywords'
-        i = 0
-        report = None
-        if gen_report:
-            report_name = '.results/filter_ab_%.2f_%.2f.txt' % (alpha, beta)
-            report = open(report_name, 'w')
-        if doc_ids and news_docs:
-            doc_ids = set(doc_ids)
-            news_ids = []
-            for doc_id in doc_ids:
-                news_ids.append(news_docs[doc_id])
-            items = self.filter(base_id__in=news_ids)
-        else:
-            items = self.iterate()
-        for news in items:
-            i += 1
-            if not i % 100:
-                print dt(), '-> processed:', i
-            news.create_keyword_items(alpha, beta, report)
-        if gen_report:
-            report.close()
 
 
 class AbstractKeywords(models.Model):
@@ -76,6 +52,42 @@ class AbstractKeywords(models.Model):
                                 summa=summa, average=average,
                                 deviation=deviation)
 
+
+class NewsKeywordsManager(AbstractKeywordsManager):
+    def create_keyword_items(self, alpha, beta, news_docs=None, doc_ids=None,
+                             gen_report=False):
+        print dt(), '@ Create news keywords'
+        i = 0
+        report = None
+        if gen_report:
+            report_name = '.results/filter_ab_%.2f_%.2f.txt' % (alpha, beta)
+            report = open(report_name, 'w')
+        if doc_ids and news_docs:
+            doc_ids = set(doc_ids)
+            news_ids = []
+            for doc_id in doc_ids:
+                news_ids.append(news_docs[doc_id])
+            items = self.filter(base_id__in=news_ids)
+        else:
+            items = self.iterate()
+        for news in items:
+            i += 1
+            if not i % 100:
+                print dt(), '-> processed:', i
+            news.create_keyword_items(alpha, beta, report)
+        if gen_report:
+            report.close()
+
+
+class NewsKeywords(AbstractKeywords):
+    base = models.ForeignKey('main.News')
+    objects = NewsKeywordsManager(NewsStats)
+    stats_model = NewsStats
+    keyword_item_model = NewsKeywordItem
+
+    class Meta:
+        app_label = 'main'
+
     def create_keyword_items(self, alpha, beta, report=None):
         words = self.keywords.split(' ')
         data = Counter(words).most_common()
@@ -88,19 +100,15 @@ class AbstractKeywords(models.Model):
         right = stats.average + beta * stats.deviation
         if report:
             report.write("\n%s \n#%d: (avg=%.2f, s=%.2f): [%.2f, %.2f]\n" %
-                         (self.base.subject.encode('cp1251'), self.base.doc_id, \
+                         (self.base.subject.encode('cp1251'), self.base.doc_id,
                           stats.average, stats.deviation, left, right))
         keywords = []
         for word, count in data:
             weight = float(count) / stats.summa
             if alpha_beta(count, stats.average, stats.deviation, alpha, beta):
                 if not report:
-                    kwargs = {}
-                    if self.keyword_item_model == ParagraphKeywordItem:
-                        kwargs['news'] = self.base.news
                     keyword = self.keyword_item_model(
-                        base=self.base, word=word, count=count, weight=weight,
-                        **kwargs)
+                        base=self.base, word=word, count=count, weight=weight)
                     keywords.append(keyword)
             if report:
                 if count < left:
@@ -115,14 +123,23 @@ class AbstractKeywords(models.Model):
             self.keyword_item_model.objects.bulk_create(keywords)
 
 
-class NewsKeywords(AbstractKeywords):
-    base = models.ForeignKey('main.News')
-    objects = NewsKeywordsManager(NewsStats)
-    stats_model = NewsStats
-    keyword_item_model = NewsKeywordItem
-
-    class Meta:
-        app_label = 'main'
+class ParagraphKeywordsManager(AbstractKeywordsManager):
+    def create_keyword_items(self, news_docs=None, doc_ids=None):
+        print dt(), '@ Create paragraph keywords'
+        i = 0
+        if doc_ids and news_docs:
+            doc_ids = set(doc_ids)
+            news_ids = []
+            for doc_id in doc_ids:
+                news_ids.append(news_docs[doc_id])
+            items = self.filter(base_id__in=news_ids)
+        else:
+            items = self.iterate()
+        for news in items:
+            i += 1
+            if not i % 100:
+                print dt(), '-> processed:', i
+            news.create_keyword_items()
 
 
 class ParagraphKeywords(AbstractKeywords):
@@ -133,3 +150,23 @@ class ParagraphKeywords(AbstractKeywords):
 
     class Meta:
         app_label = 'main'
+
+    def create_keyword_items(self):
+        words = self.keywords.split(' ')
+        data = Counter(words).most_common()
+        try:
+            stats = self.stats_model.objects.get(base=self.base)
+        except ObjectDoesNotExist:
+            # print self.news_id
+            return
+        keywords = []
+        for word, count in data:
+            weight = float(count) / stats.summa
+            # kwargs = {}
+            # if self.keyword_item_model == ParagraphKeywordItem:
+            #     kwargs['news'] = self.base.news
+            keyword = self.keyword_item_model(
+                base=self.base, word=word, count=count, weight=weight,
+                news=self.base.news)
+            keywords.append(keyword)
+        self.keyword_item_model.objects.bulk_create(keywords)
