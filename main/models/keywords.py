@@ -54,7 +54,7 @@ class AbstractKeywords(models.Model):
 
 
 class NewsKeywordsManager(AbstractKeywordsManager):
-    def create_keyword_items(self, alpha, beta, news_docs=None, doc_ids=None,
+    def create_keyword_items(self, alpha, beta, several_news_ids=None,
                              gen_report=False):
         print dt(), '@ Create news keywords'
         i = 0
@@ -62,12 +62,8 @@ class NewsKeywordsManager(AbstractKeywordsManager):
         if gen_report:
             report_name = '.results/filter_ab_%.2f_%.2f.txt' % (alpha, beta)
             report = open(report_name, 'w')
-        if doc_ids and news_docs:
-            doc_ids = set(doc_ids)
-            news_ids = []
-            for doc_id in doc_ids:
-                news_ids.append(news_docs[doc_id])
-            items = self.filter(base_id__in=news_ids)
+        if several_news_ids:
+            items = self.filter(base_id__in=several_news_ids)
         else:
             items = self.iterate()
         for news in items:
@@ -124,49 +120,47 @@ class NewsKeywords(AbstractKeywords):
 
 
 class ParagraphKeywordsManager(AbstractKeywordsManager):
-    def create_keyword_items(self, news_docs=None, doc_ids=None):
+    def create_keyword_items(self, all_paragraphs=None, news_by_paragraph=None,
+                             valid_keywords=None):
         print dt(), '@ Create paragraph keywords'
         i = 0
-        if doc_ids and news_docs:
-            doc_ids = set(doc_ids)
-            news_ids = []
-            for doc_id in doc_ids:
-                news_ids.append(news_docs[doc_id])
-            items = self.filter(base_id__in=news_ids)
+        if all_paragraphs:
+            items = self.filter(base_id__in=all_paragraphs)
         else:
             items = self.iterate()
         for news in items:
             i += 1
             if not i % 100:
                 print dt(), '-> processed:', i
-            news.create_keyword_items()
+            news.create_keyword_items(news_by_paragraph, valid_keywords)
 
 
 class ParagraphKeywords(AbstractKeywords):
     base = models.ForeignKey('main.NewsParagraph')
-    objects = NewsKeywordsManager(ParagraphStats)
+    objects = ParagraphKeywordsManager(ParagraphStats)
     stats_model = ParagraphStats
     keyword_item_model = ParagraphKeywordItem
 
     class Meta:
         app_label = 'main'
 
-    def create_keyword_items(self):
+    def create_keyword_items(self, news_by_paragraph, valid_keywords):
         words = self.keywords.split(' ')
         data = Counter(words).most_common()
         try:
             stats = self.stats_model.objects.get(base=self.base)
         except ObjectDoesNotExist:
-            # print self.news_id
             return
         keywords = []
+        news_id = news_by_paragraph[self.pk]
         for word, count in data:
-            weight = float(count) / stats.summa
-            # kwargs = {}
-            # if self.keyword_item_model == ParagraphKeywordItem:
-            #     kwargs['news'] = self.base.news
-            keyword = self.keyword_item_model(
-                base=self.base, word=word, count=count, weight=weight,
-                news=self.base.news)
-            keywords.append(keyword)
+            if word in valid_keywords[news_id]:
+                weight = float(count) / stats.summa
+                # kwargs = {}
+                # if self.keyword_item_model == ParagraphKeywordItem:
+                #     kwargs['news'] = self.base.news
+                keyword = self.keyword_item_model(
+                    base=self.base, word=word, count=count, weight=weight,
+                    news=self.base.news)
+                keywords.append(keyword)
         self.keyword_item_model.objects.bulk_create(keywords)

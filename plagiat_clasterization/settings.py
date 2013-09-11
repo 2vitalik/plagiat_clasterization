@@ -12,10 +12,11 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        # 'NAME': 'plagiat',
-        'NAME': 'plagiat_clasterization',
+        'NAME': 'plagiat',
+        # 'NAME': 'plagiat_clasterization',
         'USER': 'root',
-        'PASSWORD': 'root',
+        # 'PASSWORD': 'root',
+        'PASSWORD': '',
         'HOST': '',
         'PORT': '',
     }
