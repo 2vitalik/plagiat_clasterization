@@ -55,23 +55,30 @@ if several_doc_ids and news_by_docs:
     several_doc_ids = set(several_doc_ids)
     for doc_id in several_doc_ids:
         several_news_ids.append(news_by_docs[doc_id])
+print 'loaded clustered ids'
 
 items = NewsParagraph.objects.filter(news__in=several_news_ids).only('news')
 # paragraphs_by_news = dict()
 news_by_paragraph = dict()
 all_paragraphs = list()
 for item in items:
+    # print item.pk, item.news.pk
     # paragraphs_by_news.setdefault(item.news.pk, list())
     # paragraphs_by_news[item.news.pk].append(item.pk)
-    news_by_paragraph[item.pk] = item.news.pk
+    news_by_paragraph[item.pk] = item.news_id
     all_paragraphs.append(item.pk)
+print 'loaded paragraphs ids'
 
-items = NewsKeywordItem.objects.filter(base__in=all_paragraphs).only('word',
-                                                                     'news')
+items = NewsKeywordItem.objects.filter(base__in=several_news_ids).\
+    only('word', 'base')
+items = list(items)
+print 'loaded news keywords'
 valid_keywords = dict()
 for item in items:
-    valid_keywords.setdefault(item.news.pk, list())
-    valid_keywords[item.news.pk].append(item.word)
+    news_id = item.base_id
+    valid_keywords.setdefault(news_id, list())
+    valid_keywords[news_id].append(item.word)
+print 'processed news keywords'
 
 ## create NewsKeywordItem and ParagraphKeywordItem
 # alpha = 10
