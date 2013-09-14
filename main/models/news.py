@@ -2,12 +2,13 @@
 import os
 from xml.etree import ElementTree
 from django.db import models
-from libs.manager import LargeManager
 from libs.tools import dt, w2u
+from main.models import AbstractCreateStemmedModel, TitlesStemmed, \
+    CreateStemmedManager
 from main.models.news_content import NewsContent
 
 
-class NewsManager(LargeManager):
+class NewsManager(CreateStemmedManager):
     def load_from_folder(self, news_path):
         print dt(), '@ Loading files, adding news to DB, creating news_contests'
         files = os.listdir(news_path)
@@ -49,18 +50,20 @@ class NewsManager(LargeManager):
         return news_content
 
 
-class News(models.Model):
+class News(AbstractCreateStemmedModel):
     doc_id = models.IntegerField()
     url = models.URLField()
     subject = models.CharField(max_length=500)
     agency = models.CharField(max_length=100)
     date = models.IntegerField()
     daytime = models.IntegerField()
-    content = models.TextField()
-    stemmed = models.TextField(blank=True)
-    keywords = models.TextField(blank=True)
 
-    objects = NewsManager()
+    objects = NewsManager(TitlesStemmed)
+    stemmed_model = TitlesStemmed
 
     class Meta:
         app_label = 'main'
+
+    def __init__(self, *args, **kwargs):
+        super(News, self).__init__(*args, **kwargs)
+        self.base = self

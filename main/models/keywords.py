@@ -75,6 +75,13 @@ class NewsKeywordsManager(AbstractKeywordsManager):
             report.close()
 
 
+class TitleKeywords(AbstractKeywords):
+    base = models.ForeignKey('main.News')
+
+    class Meta:
+        app_label = 'main'
+
+
 class NewsKeywords(AbstractKeywords):
     base = models.ForeignKey('main.News')
     objects = NewsKeywordsManager(NewsStats)

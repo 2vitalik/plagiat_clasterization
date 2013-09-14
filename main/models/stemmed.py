@@ -4,7 +4,7 @@ from django.db import models
 from libs.manager import LargeManager
 from libs.mystem import mystem
 from libs.tools import dt
-from main.models.keywords import NewsKeywords, ParagraphKeywords
+from main.models.keywords import NewsKeywords, ParagraphKeywords, TitleKeywords
 
 
 class CreateStemmedManager(LargeManager):
@@ -134,6 +134,15 @@ class NewsStemmed(AbstractStemmedModel):
     base = models.ForeignKey('main.News')
     objects = CreateKeywordsManager(NewsKeywords)
     keywords_model = NewsKeywords
+
+    class Meta:
+        app_label = 'main'
+
+
+class TitlesStemmed(AbstractStemmedModel):
+    base = models.ForeignKey('main.News')
+    objects = CreateKeywordsManager(TitleKeywords)
+    keywords_model = TitleKeywords
 
     class Meta:
         app_label = 'main'
