@@ -34,13 +34,13 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 # create NewsStats and ParagraphStats
 # NewsKeywords.objects.create_stats()
 # ParagraphKeywords.objects.create_stats()
-
+'''
 ## gen_reports
-# coefficients = [(1, 2), (1, 3), (1, 4)]
-# for alpha, beta in coefficients:
-#     print dt(), 'alpha=%.2f, beta=%.2f' % (alpha, beta)
-#     NewsKeywords.objects.create_keyword_items(alpha, beta, gen_report=True)
-
+coefficients =  [(0, 100)]
+for alpha, beta in coefficients:
+    print dt(), 'alpha=%.2f, beta=%.2f' % (alpha, beta)
+    NewsKeywords.objects.create_keyword_items(alpha, beta, gen_report=True)
+'''
 # get 704 news
 several_doc_ids = read_lines('.conf/clustered.txt')  # load clustered several_doc_ids
 several_doc_ids = map(int, several_doc_ids)
@@ -81,25 +81,23 @@ for item in items:
 print 'processed news keywords'
 
 ## create NewsKeywordItem and ParagraphKeywordItem
-# alpha = 10
-# beta = 100
-# NewsKeywords.objects.create_keyword_items(alpha, beta, several_news_ids)
-ParagraphKeywords.objects.create_keyword_items(all_paragraphs,
-                                               news_by_paragraph,
-                                               valid_keywords)
+alpha = 0
+beta = 100
+#NewsKeywords.objects.create_keyword_items(alpha, beta, several_news_ids)
+#ParagraphKeywords.objects.create_keyword_items(all_paragraphs, news_by_paragraph, valid_keywords)
 
 # todo: third mode: all news that intersects with 704
 
 ## calculate cosinuses for news
-# NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs, several_doc_ids)
+#NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs, several_doc_ids)
 # NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs)
 
 ## calculate cosinuses for paragraphs
-# docs = dict()
-# for news in News.objects.only('doc_id'):
-#     docs[news.pk] = news.doc_id
-# # ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7)
-# ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7, several=False)
+docs = dict()
+for news in News.objects.only('doc_id'):
+    docs[news.pk] = news.doc_id
+ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1)
+#ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1, several=False)
 
 # todo: calc all cosinuses and then try to check different coefficient "d"
 
