@@ -229,6 +229,8 @@ class ParagraphKeywordItemManager(LargeManager):
         print dt(), '-> processing all pairs:', len(pairs)
         for news_id_1, news_id_2, news_cos in pairs:
             pair_ok = False
+            temp_cos = 0
+            temp_res = None
             i += 1
             if not i % 10:
                 print dt(), '   processed pairs: ', i
@@ -241,29 +243,34 @@ class ParagraphKeywordItemManager(LargeManager):
                     # if last1 == news_id1 and news_id2 <= last2:
                     #     continue
                     cos = vector_cos(paragraph_1, paragraph_2)
-                    results.append(paragraph_cos_results_model(
-                        news_1_id=news_id_1, paragraph_1_id=paragraph_id_1,
-                        news_2_id=news_id_2, paragraph_2_id=paragraph_id_2,
-                        cos=cos))
-                    if cos > min_cos:
-                        pair_ok = True
+                    if temp_res == None or cos > temp_cos:
+                        results.append(paragraph_cos_results_model(\
+                            news_1_id=news_id_1, paragraph_1_id=paragraph_id_1,\
+                            news_2_id=news_id_2, paragraph_2_id=paragraph_id_2,\
+                            cos=cos))
+
+#                    if cos > min_cos:
+#                        pair_ok = True
+
                     # todo: calc and save max paragraph cos
-                    j += 1
-                    if not j % 10000:
-                        paragraph_cos_results_model.objects.bulk_create(results)
-                        print dt(), '   paragraph cos added:', j
-                        results = []
                 gc.collect()
-            if pair_ok:
-                p += 1
-                pairs_ok.append(good_cos_results_model(
-                    news_1_id=news_id_1, news_2_id=news_id_2,
-                    doc_1=docs[news_id_1], doc_2=docs[news_id_2],
-                    cos=news_cos))
-                if not p % 100:
-                    good_cos_results_model.objects.bulk_create(pairs_ok)
-                    print dt(), '   good pairs of news added:', p
-                    pairs_ok = []
+            j += 1
+            if not j % 100:
+                paragraph_cos_results_model.objects.bulk_create(results)
+                print dt(), '   paragraph cos added:', j
+                results = []
+            
+#            if pair_ok:
+#                p += 1
+#                pairs_ok.append(good_cos_results_model(
+#                    news_1_id=news_id_1, news_2_id=news_id_2,
+#                    doc_1=docs[news_id_1], doc_2=docs[news_id_2],
+#                    cos=news_cos))
+#                if not p % 100:
+#                    good_cos_results_model.objects.bulk_create(pairs_ok)
+#                    print dt(), '   good pairs of news added:', p
+#                    pairs_ok = []
+
         paragraph_cos_results_model.objects.bulk_create(results)
         print dt(), '-> paragraph cos added:', j
         good_cos_results_model.objects.bulk_create(pairs_ok)
