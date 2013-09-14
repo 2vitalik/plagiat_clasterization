@@ -177,7 +177,8 @@ class NewsKeywordItem(AbstractKeywordItem):
 
 
 class ParagraphKeywordItemManager(LargeManager):
-    def paragraph_calculate_cosinuses(self, docs, min_global_cos, several=True):
+    def paragraph_calculate_cosinuses(self, docs, min_global_cos,
+                                      several=True, save_good_news=True):
         print dt(), 'calculate_cosinuses'
         data = dict()
         i = 0
@@ -272,7 +273,7 @@ class ParagraphKeywordItemManager(LargeManager):
                     good_cos_results_model.objects.bulk_create(best_results)
                     print dt(), '   best cos of paragraphs added:', c
                     best_results = []
-            if pair_ok:
+            if save_good_news and pair_ok:
                 p += 1
                 pairs_ok.append(good_cos_results_model(
                     news_1_id=news_id_1, news_2_id=news_id_2,
@@ -286,8 +287,9 @@ class ParagraphKeywordItemManager(LargeManager):
         # print dt(), '-> paragraph cos added:', j
         paragraph_cos_results_model.objects.bulk_create(best_results)
         print dt(), '   best cos of paragraphs added:', c
-        good_cos_results_model.objects.bulk_create(pairs_ok)
-        print dt(), '-> good pairs of news added:', p
+        if save_good_news:
+            good_cos_results_model.objects.bulk_create(pairs_ok)
+            print dt(), '-> good pairs of news added:', p
 
 
 class ParagraphKeywordItem(AbstractKeywordItem):
