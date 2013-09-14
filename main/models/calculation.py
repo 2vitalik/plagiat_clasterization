@@ -177,7 +177,7 @@ class NewsKeywordItem(AbstractKeywordItem):
 
 
 class ParagraphKeywordItemManager(LargeManager):
-    def paragraph_calculate_cosinuses(self, docs, min_cos, several=True):
+    def paragraph_calculate_cosinuses(self, docs, min_global_cos, several=True):
         print dt(), 'calculate_cosinuses'
         data = dict()
         i = 0
@@ -224,14 +224,16 @@ class ParagraphKeywordItemManager(LargeManager):
             #     break
         print dt(), '   loaded keywords:', i
         results = []
-        i = j = p = 0
+        best_results = []
+        i = j = p = c = 0
         pairs_ok = list()
         print dt(), '-> processing all pairs:', len(pairs)
         for news_id_1, news_id_2, news_cos in pairs:
             pair_ok = False
-            temp_cos = 0
-            temp_res = None
             i += 1
+            max_local_cos = -1
+            best_paragraph_1 = -1
+            best_paragraph_2 = -1
             if not i % 10:
                 print dt(), '   processed pairs: ', i
             for paragraph_id_1, paragraph_1 in data[news_id_1].items():
@@ -243,38 +245,47 @@ class ParagraphKeywordItemManager(LargeManager):
                     # if last1 == news_id1 and news_id2 <= last2:
                     #     continue
                     cos = vector_cos(paragraph_1, paragraph_2)
-                    if temp_res == None or cos > temp_cos:
-                        temp_cos = cos
-                        temp_res = paragraph_cos_results_model(\
-                            news_1_id=news_id_1, paragraph_1_id=paragraph_id_1,\
-                            news_2_id=news_id_2, paragraph_2_id=paragraph_id_2,\
-                            cos=cos)
-
-#                    if cos > min_cos:
-#                        pair_ok = True
-
+                    # results.append(paragraph_cos_results_model(
+                    #     news_1_id=news_id_1, paragraph_1_id=paragraph_id_1,
+                    #     news_2_id=news_id_2, paragraph_2_id=paragraph_id_2,
+                    #     cos=cos))
+                    if cos > min_global_cos:
+                        pair_ok = True
+                    if cos > max_local_cos:
+                        max_local_cos = cos
+                        best_paragraph_1 = paragraph_id_1
+                        best_paragraph_2 = paragraph_id_2
                     # todo: calc and save max paragraph cos
+                    # j += 1
+                    # if not j % 10000:
+                    #     paragraph_cos_results_model.objects.bulk_create(results)
+                    #     print dt(), '   paragraph cos added:', j
+                    #     results = []
                 gc.collect()
-            j += 1
-            if not j % 1000:
-                results.append(temp_res)                
-                paragraph_cos_results_model.objects.bulk_create(results)
-                print dt(), '   paragraph cos added:', j
-                results = []
-            
-#            if pair_ok:
-#                p += 1
-#                pairs_ok.append(good_cos_results_model(
-#                    news_1_id=news_id_1, news_2_id=news_id_2,
-#                    doc_1=docs[news_id_1], doc_2=docs[news_id_2],
-#                    cos=news_cos))
-#                if not p % 100:
-#                    good_cos_results_model.objects.bulk_create(pairs_ok)
-#                    print dt(), '   good pairs of news added:', p
-#                    pairs_ok = []
-
-        paragraph_cos_results_model.objects.bulk_create(results)
-        print dt(), '-> paragraph cos added:', j
+            if max_local_cos != -1:
+                c += 1
+                best_results.append(paragraph_cos_results_model(
+                    news_1_id=news_id_1, paragraph_1_id=best_paragraph_1,
+                    news_2_id=news_id_2, paragraph_2_id=best_paragraph_2,
+                    cos=max_local_cos))
+                if not c % 100:
+                    good_cos_results_model.objects.bulk_create(best_results)
+                    print dt(), '   best cos of paragraphs added:', c
+                    best_results = []
+            if pair_ok:
+                p += 1
+                pairs_ok.append(good_cos_results_model(
+                    news_1_id=news_id_1, news_2_id=news_id_2,
+                    doc_1=docs[news_id_1], doc_2=docs[news_id_2],
+                    cos=news_cos))
+                if not p % 100:
+                    good_cos_results_model.objects.bulk_create(pairs_ok)
+                    print dt(), '   good pairs of news added:', p
+                    pairs_ok = []
+        # paragraph_cos_results_model.objects.bulk_create(results)
+        # print dt(), '-> paragraph cos added:', j
+        paragraph_cos_results_model.objects.bulk_create(best_results)
+        print dt(), '   best cos of paragraphs added:', c
         good_cos_results_model.objects.bulk_create(pairs_ok)
         print dt(), '-> good pairs of news added:', p
 
