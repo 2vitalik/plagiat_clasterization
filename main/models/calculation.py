@@ -244,10 +244,11 @@ class ParagraphKeywordItemManager(LargeManager):
                     #     continue
                     cos = vector_cos(paragraph_1, paragraph_2)
                     if temp_res == None or cos > temp_cos:
-                        results.append(paragraph_cos_results_model(\
+                        temp_cos = cos
+                        temp_res = paragraph_cos_results_model(\
                             news_1_id=news_id_1, paragraph_1_id=paragraph_id_1,\
                             news_2_id=news_id_2, paragraph_2_id=paragraph_id_2,\
-                            cos=cos))
+                            cos=cos)
 
 #                    if cos > min_cos:
 #                        pair_ok = True
@@ -255,7 +256,8 @@ class ParagraphKeywordItemManager(LargeManager):
                     # todo: calc and save max paragraph cos
                 gc.collect()
             j += 1
-            if not j % 100:
+            if not j % 1000:
+                results.append(temp_res)                
                 paragraph_cos_results_model.objects.bulk_create(results)
                 print dt(), '   paragraph cos added:', j
                 results = []
