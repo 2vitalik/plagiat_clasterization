@@ -96,7 +96,7 @@ beta = 100
 docs = dict()
 for news in News.objects.only('doc_id'):
     docs[news.pk] = news.doc_id
-ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1)
+ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1, save_good_news = False)
 #ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1, several=False)
 
 # todo: calc all cosinuses and then try to check different coefficient "d"

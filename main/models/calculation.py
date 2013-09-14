@@ -270,7 +270,7 @@ class ParagraphKeywordItemManager(LargeManager):
                     news_2_id=news_id_2, paragraph_2_id=best_paragraph_2,
                     cos=max_local_cos))
                 if not c % 100:
-                    good_cos_results_model.objects.bulk_create(best_results)
+                    paragraph_cos_results_model.objects.bulk_create(best_results)
                     print dt(), '   best cos of paragraphs added:', c
                     best_results = []
             if save_good_news and pair_ok:
