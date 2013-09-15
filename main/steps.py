@@ -1,7 +1,9 @@
 # coding: utf-8
 from libs.file import read_lines
 from libs.timer import ts, tp, timer, td
-from main.models import News, NewsContent, NewsParagraph, TitleStemmed, NewsStemmed, ParagraphStemmed, NewsKeywords, ParagraphKeywords, NewsKeywordItem, TitleKeywordItem, TitleKeywords
+from main.models import News, NewsContent, NewsParagraph, TitleStemmed, \
+    NewsStemmed, ParagraphStemmed, NewsKeywords, ParagraphKeywords, \
+    NewsKeywordItem, TitleKeywordItem, TitleKeywords, ParagraphKeywordItem
 from plagiat_clasterization import settings
 
 
@@ -17,10 +19,96 @@ class MissedValueError(Exception):
 
 
 class Steps(object):
-    steps = {
-        'load_news_from_folder': "create News and NewsContent",
-        'create_paragraphs': "create NewsParagraph",
-    }
+    steps = [
+        {'slug': 'load_news_from_folder',
+         'type': 'news',
+         'title': "create News and NewsContent",
+         'desc': ''},
+        {'slug': 'create_paragraphs',
+         'type': 'paragraphs',
+         'title': "create NewsParagraph",
+         'desc': ''},
+        {'slug': 'create_title_stemmed',
+         'type': 'title',
+         'title': '',
+         'desc': ''},
+        {'slug': 'create_news_stemmed',
+         'type': 'news',
+         'title': '',
+         'desc': ''},
+        {'slug': 'create_paragraph_stemmed',
+         'type': 'paragraphs',
+         'title': '',
+         'desc': ''},
+        {'slug': 'load_stop_words',
+         'type': '',
+         'title': '',
+         'desc': ''},
+        {'slug': 'create_title_keywords',
+         'type': 'title',
+         'title': '',
+         'desc': ''},
+        {'slug': 'create_news_keywords',
+         'type': '',
+         'title': '',
+         'desc': ''},
+        {'slug': 'create_paragraph_keywords',
+         'type': 'paragraphs',
+         'title': '',
+         'desc': ''},
+        {'slug': 'create_news_stats',
+         'type': 'news',
+         'title': '',
+         'desc': ''},
+        {'slug': 'create_paragraph_stats',
+         'type': 'paragraphs',
+         'title': '',
+         'desc': ''},
+        {'slug': 'build_docs_news_dependencies',
+         'type': '',
+         'title': '',
+         'desc': ''},
+        {'slug': 'load_several_clustered_news',
+         'type': '',
+         'title': '',
+         'desc': ''},
+        {'slug': 'load_paragraph_ids',
+         'type': '',
+         'title': '',
+         'desc': ''},
+        {'slug': 'load_news_keywords',
+         'type': 'news',
+         'title': '',
+         'desc': ''},
+        {'slug': 'load_title_keywords',
+         'type': 'title',
+         'title': '',
+         'desc': ''},
+        {'slug': 'gen_reports',
+         'type': '',
+         'title': '',
+         'desc': ''},
+        {'slug': 'create_title_keyword_items',
+         'type': 'title',
+         'title': '',
+         'desc': ''},
+        {'slug': 'create_news_keyword_items',
+         'type': 'news',
+         'title': '',
+         'desc': ''},
+        {'slug': 'create_paragraph_keyword_items',
+         'type': 'paragraphs',
+         'title': '',
+         'desc': ''},
+        {'slug': 'calculate_news_cos',
+         'type': 'news',
+         'title': '',
+         'desc': ''},
+        {'slug': 'calculate_paragraph_cos',
+         'type': 'paragraphs',
+         'title': '',
+         'desc': ''},
+    ]
 
     def load_news_from_folder(self):
         """ create News and NewsContent """
@@ -82,7 +170,7 @@ class Steps(object):
                                    'build_docs_news_dependencies')
         several_doc_ids = read_lines('.conf/clustered.txt')
         if not several_doc_ids:
-            raise Exception(u'Ошибка загрузки файла с кластеризованными новостями')
+            raise Exception(u'Ошибка загрузки файла clustered.txt')
         several_doc_ids = map(int, several_doc_ids)
         self.several_doc_ids = set(several_doc_ids)
         self.several_news_ids = list()
@@ -138,7 +226,7 @@ class Steps(object):
 
     @timer()
     def gen_reports(self):
-        coefficients =  [(0, 100)]
+        coefficients = [(0, 100)]
         for alpha, beta in coefficients:
             td('alpha=%.2f, beta=%.2f' % (alpha, beta))
             NewsKeywords.objects.create_keyword_items(alpha, beta,
@@ -163,15 +251,19 @@ class Steps(object):
                                                        self.news_by_paragraph,
                                                        self.valid_keywords)
 
-## calculate cosinuses for news
-# NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs,
-#                                                  several_doc_ids)
-# NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs)
+    def calculate_news_cos(self):
+        """ calculate cosinuses for news """
+        NewsKeywordItem.objects.news_calculate_cosinuses(self.docs_by_news,
+                                                         self.news_by_docs,
+                                                         self.several_doc_ids)
+        # NewsKeywordItem.objects.news_calculate_cosinuses(self.docs_by_news,
+        #                                                  self.news_by_docs)
 
-
-## calculate cosinuses for paragraphs
-# docs = dict()
-# for news in News.objects.only('doc_id'):
-#     docs[news.pk] = news.doc_id
-# ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7)
-# ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1, several=False)
+    def calculate_paragraph_cos(self):
+        """ calculate cosinuses for paragraphs """
+        min_global_cos = 0.7
+        ParagraphKeywordItem.objects. \
+            paragraph_calculate_cosinuses(self.docs_by_news, min_global_cos)
+        # ParagraphKeywordItem.objects.\
+        #     paragraph_calculate_cosinuses(self.docs_by_news, min_global_cos,
+        #                                   several=False)

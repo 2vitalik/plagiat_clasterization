@@ -5,11 +5,11 @@
     <h2>Запуск этапов:</h2>
     <form method="post">{% csrf_token %}
         <ul style="list-style: none;">
-        {% for func, title in steps.items %}
+        {% for func, title in steps %}
             <li>
                 <label>
                     <input type="checkbox" name="{{ func }}" />
-                    {{ title }}
+                    <b>{% if title %}{{ title }}{% else %}{{ func }}{% endif %}<b>
                 </label>
             </li>
         {% endfor %}
