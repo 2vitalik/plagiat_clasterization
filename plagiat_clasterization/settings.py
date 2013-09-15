@@ -13,17 +13,6 @@ MANAGERS = ADMINS
 PROJECT_PATH = os.path.dirname(__file__)
 CURRENT_ROOT = os.path.join(PROJECT_PATH, '..')
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'news_plagiat',  # 'plagiat_clasterization',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
-}
-
 TIME_ZONE = 'Europe/Kiev'
 LANGUAGE_CODE = 'ru-ru'
 SITE_ID = 1
