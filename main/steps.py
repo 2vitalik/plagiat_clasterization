@@ -286,8 +286,11 @@ class Steps(object):
     def calculate_paragraph_cos(self):
         """ calculate cosinuses for paragraphs """
         min_global_cos = 0.7
+        # ParagraphKeywordItem.objects. \
+        #     paragraph_calculate_cosinuses(self.docs_by_news, min_global_cos)
         ParagraphKeywordItem.objects. \
-            paragraph_calculate_cosinuses(self.docs_by_news, min_global_cos)
+            paragraph_calculate_cosinuses(self.docs_by_news, 1,
+                                          save_good_news=False)
         # ParagraphKeywordItem.objects.\
         #     paragraph_calculate_cosinuses(self.docs_by_news, min_global_cos,
         #                                   several=False)

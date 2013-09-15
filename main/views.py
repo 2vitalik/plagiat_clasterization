@@ -22,9 +22,10 @@ class MainView(TemplateView):
                 continue
             steps.append(step)
         steps = sorted(steps, key=lambda step: Steps.step_index(step))
+        app = Steps()
         for step in steps:
             print '#' * 80
             print '#' * 1, step
             print '#' * 80
-            getattr(Steps(), step)()
+            getattr(app, step)()
         return super(MainView, self).get(request, *args, **kwargs)

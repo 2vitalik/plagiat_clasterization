@@ -1,4 +1,5 @@
 import gc
+from operator import itemgetter
 from django.db import models
 from libs.manager import LargeManager
 from libs.timer import ts, timer, tp, ti, tc, td
@@ -200,6 +201,14 @@ class ParagraphKeywordItemManager(LargeManager):
             cos_results_model = CosResult
             paragraph_cos_results_model = ParagraphCosResult
             good_cos_results_model = CosResultAfterParagraph
+
+        last1 = last2 = 0
+        last = paragraph_cos_results_model.objects.order_by('-pk')
+        if last:
+            last = last[0]
+            last1 = last.news_1_id
+            last2 = last.news_2_id
+
         # todo: get all (!!!) pairs (except cos=0 and cos>0.95)
         # items = cos_results_model.objects.filter(cos__gt=min_cos)
         ts('get news_ids from cos-table')
@@ -233,7 +242,14 @@ class ParagraphKeywordItemManager(LargeManager):
         j = p = c = 0
         pairs_ok = list()
         ts('main loop, pairs: %d' % len(pairs))
+        pairs = sorted(pairs, key=itemgetter(1))
+        pairs = sorted(pairs, key=itemgetter(0))
         for news_id_1, news_id_2, news_cos in pairs:
+            if last1:
+                if news_id_1 < last1:
+                    continue
+                if last1 == news_id_1 and news_id_2 <= last2:
+                    continue
             pair_ok = False
             max_local_cos = best_paragraph_1 = best_paragraph_2 = -1
             tc(10)
