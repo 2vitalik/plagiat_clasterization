@@ -47,7 +47,14 @@ def ti(mod=10000):
     counter += 1
     if not counter % mod:
         message = '™%s· %d passed' % (' ' * local_indent, counter)
+        logger.debug(message)
         print message
+
+
+def td(info):
+    message = '™%s· %s' % (' ' * local_indent, info)
+    logger.debug(message)
+    print message
 
 
 def tc(mod=10000):

@@ -2,6 +2,7 @@
 import os
 import sys
 from libs.file import read_lines
+from libs.logger import logger
 from libs.tools import dt
 
 path = os.path.dirname(__file__)
@@ -12,6 +13,8 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plagiat_clasterization.settings
 from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
     NewsKeywords, ParagraphStemmed, ParagraphKeywords, NewsKeywordItem, \
     ParagraphKeywordItem
+
+logger.debug('¶')
 
 ## create News and NewsContent
 # news_path = 'd:/www/giga/plagiat/news'
@@ -93,15 +96,15 @@ print 'loaded clustered ids'
 # todo: third mode: all news that intersects with 704
 
 ## calculate cosinuses for news
-NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs,
-                                                 several_doc_ids)
+# NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs,
+#                                                  several_doc_ids)
 # NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs)
 
 ## calculate cosinuses for paragraphs
 # docs = dict()
 # for news in News.objects.only('doc_id'):
 #     docs[news.pk] = news.doc_id
-# ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1)
+ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 0.7)
 # ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1, several=False)
 
 # todo: calc all cosinuses and then try to check different coefficient "d"
