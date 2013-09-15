@@ -16,7 +16,7 @@ CURRENT_ROOT = os.path.join(PROJECT_PATH, '..')
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'news_plagiat_t',  # 'plagiat_clasterization',
+        'NAME': 'news_plagiat',  # 'plagiat_clasterization',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
