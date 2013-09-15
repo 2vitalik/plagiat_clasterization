@@ -1,5 +1,18 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    hello :)
+
+    <h2>Запуск этапов:</h2>
+    <ul style="list-style: none;">
+    {% for func, title in steps.items %}
+        <li>
+            <label>
+                <input type="checkbox" />
+    {#            {{ func }}#}
+                {{ title }}
+            </label>
+        </li>
+    {% endfor %}
+    </ul>
+
 {% endblock %}
