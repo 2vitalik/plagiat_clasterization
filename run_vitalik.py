@@ -17,18 +17,6 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 
 logger.debug('¶')
 
-## create News and NewsContent
-# news_path = 'd:/www/giga/plagiat/news'
-# news_path = '/home/user/tmp/news/news'
-# News.objects.load_from_folder(news_path)
-
-## create NewsParagraph
-# NewsContent.objects.create_paragraphs()
-
-## create NewsStemmed and ParagraphStemmed
-# News.objects.create_stems()  # !!!
-# NewsContent.objects.create_stems()
-# NewsParagraph.objects.create_stems()
 
 # stop_words = read_lines('.conf/stop_words.txt', 'cp1251')
 
