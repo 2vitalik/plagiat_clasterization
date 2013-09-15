@@ -2,19 +2,57 @@
 
 {% block content %}
 
-    <h2>Запуск этапов:</h2>
+    <strong><big>Система :)</big></strong>
     <form method="post">{% csrf_token %}
-        <ul style="list-style: none;">
-        {% for func, title in steps.items %}
-            <li>
-                <label>
-                    <input type="checkbox" name="{{ func }}" />
-                    {{ title }}
-                </label>
-            </li>
-        {% endfor %}
-        </ul>
-        <button type="submit">Запустить</button>
+        <table>
+            <tr>
+                <td></td>
+                <td>
+                    <button type="submit">Запустить этапы</button>
+                </td>
+            </tr>
+            <tr style="text-align: center; font-weight: bold; color: darkblue;">
+                <td>Тип</td>
+                <td>Название</td>
+                <td>Метод</td>
+                <td>Вход</td>
+                <td>Выход</td>
+            </tr>
+            {% for step in steps %}
+                <tr>
+                    <td style="text-align: center; padding: 0 10px;">
+                        {{ step.type }}
+                    </td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="{{ step.slug }}" />
+{#                            <strong>#}
+                                {% if step.title %}
+                                    {{ step.title }}
+                                {% else %}
+                                    {{ step.slug }}
+                                {% endif %}
+{#                            </strong>#}
+                        </label>
+                    </td>
+                    <td style="font-style: italic; padding: 0 10px;">
+                        {{ step.slug }}
+                    </td>
+                    <td style="text-align: center; padding: 0 10px;">
+                        {{ step.in }}
+                    </td>
+                    <td style="text-align: center; padding: 0 10px;">
+                        {{ step.out }}
+                    </td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td></td>
+                <td>
+                    <button type="submit">Запустить этапы</button>
+                </td>
+            </tr>
+        </table>
     </form>
 
 {% endblock %}
