@@ -3,6 +3,7 @@ import re
 from django.db import models
 from libs.manager import LargeManager
 from libs.mystem import mystem
+from libs.timer import timer, td, ts, tc, tp
 from libs.tools import dt
 from main.models.keywords import NewsKeywords, ParagraphKeywords, TitleKeywords
 
@@ -12,17 +13,18 @@ class CreateStemmedManager(LargeManager):
         super(CreateStemmedManager, self).__init__()
         self.stemmed_model = stemmed_model
 
+    @timer()
     def create_stems(self):
-        print dt(), '@ Creating stems of news'
-        i = 0
+        # print dt(), '@ Creating stems of news'
         items = []
+        ts('main loop')
         for news in self.iterate():
-            i += 1
-            if not i % 100:
-                print dt(), '-> processed:', i
+            tc(100)
             stemmed = news.create_stemmed()
             items.append(stemmed)
-        print dt(), '@ Adding stems of DB'
+        tp()
+        # print dt(), '@ Adding stems of DB'
+        td('Adding stems of DB')
         self.bulk(items, model=self.stemmed_model, chunk_size=50)
 
 
@@ -67,20 +69,20 @@ class CreateKeywordsManager(LargeManager):
         super(CreateKeywordsManager, self).__init__()
         self.keywords_model = keywords_model
 
+    @timer()
     def create_keywords(self, stop_words=None, angry_mode=False):
-        print dt(), '@ Extract list of valid keywords from stemmed data'
-        i = 0
+        # print dt(), '@ Extract list of valid keywords from stemmed data'
+        td('Extract list of valid keywords from stemmed data')
         items = []
+        ts('main loop')
         for news in self.iterate(100):
-            i += 1
-            # if i < 24:
-            #     continue
-            if not i % 500:
-                print dt(), '-> processed:', i
+            tc(500)
             news_keyword = news.create_keywords(stop_words, angry_mode)
             items.append(news_keyword)
             # break
-        print dt(), '@ Adding news_keywords to DB'
+        tp()
+        # print dt(), '@ Adding news_keywords to DB'
+        td('Adding news_keywords to DB')
         self.bulk(items, model=self.keywords_model, chunk_size=250)
 
     class Meta:
@@ -139,7 +141,7 @@ class NewsStemmed(AbstractStemmedModel):
         app_label = 'main'
 
 
-class TitlesStemmed(AbstractStemmedModel):
+class TitleStemmed(AbstractStemmedModel):
     base = models.ForeignKey('main.News')
     objects = CreateKeywordsManager(TitleKeywords)
     keywords_model = TitleKeywords

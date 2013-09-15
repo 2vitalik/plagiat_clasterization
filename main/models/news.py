@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 from django.db import models
 from libs.mystem import mystem
 from libs.tools import dt, w2u
-from main.models import AbstractCreateStemmedModel, TitlesStemmed, \
+from main.models import AbstractCreateStemmedModel, TitleStemmed, \
     CreateStemmedManager
 from main.models.news_content import NewsContent
 
@@ -59,8 +59,8 @@ class News(AbstractCreateStemmedModel):
     date = models.IntegerField()
     daytime = models.IntegerField()
 
-    objects = NewsManager(TitlesStemmed)
-    stemmed_model = TitlesStemmed
+    objects = NewsManager(TitleStemmed)
+    stemmed_model = TitleStemmed
 
     class Meta:
         app_label = 'main'
