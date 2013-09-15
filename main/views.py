@@ -11,3 +11,10 @@ class MainView(TemplateView):
             'steps': Steps.steps
         })
         return context
+
+    def post(self, request, *args, **kwargs):
+        for step in request.POST:
+            if step not in Steps.steps.keys():
+                continue
+            getattr(Steps(), step)()
+        return super(MainView, self).get(request, *args, **kwargs)
