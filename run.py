@@ -14,26 +14,26 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
     ParagraphKeywordItem
 
 ## create News and NewsContent
-# news_path = 'd:/www/giga/plagiat/news'
+news_path = 'e:/news'
 # news_path = '/home/user/tmp/news/news'
-# News.objects.load_from_folder(news_path)
+News.objects.load_from_folder(news_path)
 
 ## create NewsParagraph
-# NewsContent.objects.create_paragraphs()
+NewsContent.objects.create_paragraphs()
 
 ## create NewsStemmed and ParagraphStemmed
-# NewsContent.objects.create_stems()
-# NewsParagraph.objects.create_stems()
+NewsContent.objects.create_stems()
+NewsParagraph.objects.create_stems()
 
-# stop_words = read_lines('.conf/stop_words.txt', 'cp1251')
+stop_words = read_lines('.conf/stop_words.txt', 'cp1251')
 
 ## create NewsKeyword and ParagraphKeyword
-# NewsStemmed.objects.create_keywords(stop_words, angry_mode=True)
-# ParagraphStemmed.objects.create_keywords(stop_words, angry_mode=True)
+NewsStemmed.objects.create_keywords(stop_words, angry_mode=True)
+ParagraphStemmed.objects.create_keywords(stop_words, angry_mode=True)
 
 # create NewsStats and ParagraphStats
-# NewsKeywords.objects.create_stats()
-# ParagraphKeywords.objects.create_stats()
+NewsKeywords.objects.create_stats()
+ParagraphKeywords.objects.create_stats()
 '''
 ## gen_reports
 coefficients =  [(0, 100)]
@@ -83,13 +83,13 @@ print 'processed news keywords'
 ## create NewsKeywordItem and ParagraphKeywordItem
 alpha = 0
 beta = 100
-#NewsKeywords.objects.create_keyword_items(alpha, beta, several_news_ids)
-#ParagraphKeywords.objects.create_keyword_items(all_paragraphs, news_by_paragraph, valid_keywords)
+NewsKeywords.objects.create_keyword_items(alpha, beta, several_news_ids)
+ParagraphKeywords.objects.create_keyword_items(all_paragraphs, news_by_paragraph, valid_keywords)
 
 # todo: third mode: all news that intersects with 704
 
 ## calculate cosinuses for news
-#NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs, several_doc_ids)
+NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs, several_doc_ids)
 # NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs)
 
 ## calculate cosinuses for paragraphs
