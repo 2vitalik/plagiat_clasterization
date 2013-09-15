@@ -16,8 +16,15 @@ class MainView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         logger.debug('¶')
+        steps = list()
         for step in request.POST:
             if step not in Steps.get_steps():
                 continue
+            steps.append(step)
+        steps = sorted(steps, key=lambda step: Steps.step_index(step))
+        for step in steps:
+            print '#' * 80
+            print '#' * 1, step
+            print '#' * 80
             getattr(Steps(), step)()
         return super(MainView, self).get(request, *args, **kwargs)

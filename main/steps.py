@@ -82,18 +82,6 @@ class Steps(object):
          'type': 'news',
          'title': '',
          'desc': ''},
-        {'slug': 'load_paragraph_ids',
-         'type': 'paragraphs',
-         'title': '',
-         'desc': ''},
-        {'slug': 'load_news_keywords',
-         'type': 'news',
-         'title': '',
-         'desc': ''},
-        {'slug': 'load_title_keywords',
-         'type': 'title',
-         'title': '',
-         'desc': ''},
         {'slug': 'gen_reports',
          'type': 'news',
          'title': 'Генерация отчетов по новостям (альфа-бета)',
@@ -102,9 +90,21 @@ class Steps(object):
          'type': 'title',
          'title': 'Ключевые слова в заголовках',
          'desc': ''},
+        {'slug': 'load_title_keywords',
+         'type': 'title',
+         'title': '',
+         'desc': ''},
         {'slug': 'create_news_keyword_items',
          'type': 'news',
          'title': 'Ключевые слова в новостях (альфа-бета, заголовки)',
+         'desc': ''},
+        {'slug': 'load_news_keywords',
+         'type': 'news',
+         'title': '',
+         'desc': ''},
+        {'slug': 'load_paragraph_ids',
+         'type': 'paragraphs',
+         'title': '',
          'desc': ''},
         {'slug': 'create_paragraph_keyword_items',
          'type': 'paragraphs',
@@ -123,6 +123,15 @@ class Steps(object):
     @staticmethod
     def get_steps():
         return [step['slug'] for step in Steps.steps]
+
+    @staticmethod
+    def step_index(slug):
+        i = 0
+        for step in Steps.steps:
+            if step['slug'] == slug:
+                return i
+            i += 1
+        return -1
 
     def load_news_from_folder(self):
         """ create News and NewsContent """
@@ -192,18 +201,41 @@ class Steps(object):
             self.several_news_ids.append(self.news_by_docs[doc_id])
 
     @timer()
-    def load_paragraph_ids(self):
-        items = NewsParagraph.objects.filter(news__in=self.several_news_ids)
-        items = items.only('news')
-        # paragraphs_by_news = dict()
-        self.news_by_paragraph = dict()
-        self.all_paragraphs = list()
+    def gen_reports(self):
+        coefficients = [(0, 100)]
+        for alpha, beta in coefficients:
+            td('alpha=%.2f, beta=%.2f' % (alpha, beta))
+            NewsKeywords.objects.create_keyword_items(alpha, beta,
+                                                      gen_report=True)
+
+    def create_title_keyword_items(self):
+        """ create TitleKeywordItem """
+        TitleKeywords.objects.create_keyword_items()
+        # TitleKeywords.objects.create_keyword_items(several_news_ids)
+
+    @timer()
+    def load_title_keywords(self):
+        if not self.several_news_ids:
+            raise MissedValueError('several_news_ids',
+                                   'load_several_clustered_news')
+        items = TitleKeywordItem.objects.filter(base__in=self.several_news_ids)
+        items = items.only('word', 'base')
+        ts('query')
+        items = list(items)
+        tp()
+        self.title_keywords = dict()
         for item in items:
-            # print item.pk, item.news.pk
-            # paragraphs_by_news.setdefault(item.news.pk, list())
-            # paragraphs_by_news[item.news.pk].append(item.pk)
-            self.news_by_paragraph[item.pk] = item.news_id
-            self.all_paragraphs.append(item.pk)
+            news_id = item.base_id
+            self.title_keywords.setdefault(news_id, list())
+            self.title_keywords[news_id].append(item.word)
+
+    def create_news_keyword_items(self):
+        """ create NewsKeywordItem """
+        alpha = 0
+        beta = 100
+        NewsKeywords.objects.create_keyword_items(alpha, beta,
+                                                  self.several_news_ids,
+                                                  self.title_keywords)
 
     @timer()
     def load_news_keywords(self):
@@ -223,41 +255,19 @@ class Steps(object):
 
 
     @timer()
-    def load_title_keywords(self):
-        if not self.several_news_ids:
-            raise MissedValueError('several_news_ids',
-                                   'load_several_clustered_news')
-        items = TitleKeywordItem.objects.filter(base__in=self.several_news_ids)
-        items = items.only('word', 'base')
-        ts('query')
-        items = list(items)
-        tp()
-        self.title_keywords = dict()
+    def load_paragraph_ids(self):
+        items = NewsParagraph.objects.filter(news__in=self.several_news_ids)
+        items = items.only('news')
+        # paragraphs_by_news = dict()
+        self.news_by_paragraph = dict()
+        self.all_paragraphs = list()
         for item in items:
-            news_id = item.base_id
-            self.title_keywords.setdefault(news_id, list())
-            self.title_keywords[news_id].append(item.word)
+            # print item.pk, item.news.pk
+            # paragraphs_by_news.setdefault(item.news.pk, list())
+            # paragraphs_by_news[item.news.pk].append(item.pk)
+            self.news_by_paragraph[item.pk] = item.news_id
+            self.all_paragraphs.append(item.pk)
 
-    @timer()
-    def gen_reports(self):
-        coefficients = [(0, 100)]
-        for alpha, beta in coefficients:
-            td('alpha=%.2f, beta=%.2f' % (alpha, beta))
-            NewsKeywords.objects.create_keyword_items(alpha, beta,
-                                                      gen_report=True)
-
-    def create_title_keyword_items(self):
-        """ create TitleKeywordItem """
-        TitleKeywords.objects.create_keyword_items()
-        # TitleKeywords.objects.create_keyword_items(several_news_ids)
-
-    def create_news_keyword_items(self):
-        """ create NewsKeywordItem """
-        alpha = 0
-        beta = 100
-        NewsKeywords.objects.create_keyword_items(alpha, beta,
-                                                  self.several_news_ids,
-                                                  self.title_keywords)
 
     def create_paragraph_keyword_items(self):
         """ create ParagraphKeywordItem """

@@ -17,7 +17,7 @@ class NewsManager(CreateStemmedManager):
         files = os.listdir(news_path)
         items = []
         for filename in files:
-            tc(500)
+            tc(100)
             news_content = \
                 self.load_from_xml("{}/{}".format(news_path, filename))
             items.append(news_content)
