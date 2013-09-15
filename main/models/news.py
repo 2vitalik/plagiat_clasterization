@@ -3,6 +3,7 @@ import os
 from xml.etree import ElementTree
 from django.db import models
 from libs.mystem import mystem
+from libs.timer import timer, ts, tc, tp
 from libs.tools import dt, w2u
 from main.models import AbstractCreateStemmedModel, TitleStemmed, \
     CreateStemmedManager
@@ -10,18 +11,17 @@ from main.models.news_content import NewsContent
 
 
 class NewsManager(CreateStemmedManager):
+    @timer()
     def load_from_folder(self, news_path):
-        print dt(), '@ Loading files, adding news to DB, creating news_contests'
+        ts('@ Loading files, adding news to DB, creating news_contests')
         files = os.listdir(news_path)
         items = []
-        i = 0
         for filename in files:
-            i += 1
-            if not i % 500:
-                print dt(), '-> processed:', i
+            tc(500)
             news_content = \
                 self.load_from_xml("{}/{}".format(news_path, filename))
             items.append(news_content)
+        tp()
         print dt(), '-> Total entries:', len(items)
         print dt(), '@ Adding news_contests to DB'
         self.bulk(items, model=NewsContent, chunk_size=250)
