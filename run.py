@@ -25,6 +25,7 @@ NewsContent.objects.create_paragraphs()
 NewsContent.objects.create_stems()
 NewsParagraph.objects.create_stems()
 
+sys.exit(0)
 stop_words = read_lines('.conf/stop_words.txt', 'cp1251')
 
 ## create NewsKeyword and ParagraphKeyword
