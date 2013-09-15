@@ -54,29 +54,6 @@ class AbstractKeywords(models.Model):
                                 deviation=deviation)
 
 
-class NewsKeywordsManager(AbstractKeywordsManager):
-    def create_keyword_items(self, alpha, beta, several_news_ids=None,
-                             title_keywords=None,
-                             gen_report=False):
-        print dt(), '@ Create news keywords'
-        i = 0
-        report = None
-        if gen_report:
-            report_name = '.results/filter_ab_%.2f_%.2f.txt' % (alpha, beta)
-            report = open(report_name, 'w')
-        if several_news_ids:
-            items = self.filter(base_id__in=several_news_ids)
-        else:
-            items = self.iterate()
-        for news in items:
-            i += 1
-            if not i % 100:
-                print dt(), '-> processed:', i
-            news.create_keyword_items(alpha, beta, report)
-        if gen_report:
-            report.close()
-
-
 class TitleKeywordsManager(AbstractKeywordsManager):
     @timer()
     def create_keyword_items(self, several_news_ids=None):
@@ -119,6 +96,30 @@ class TitleKeywords(AbstractKeywords):
         return keywords
 
 
+class NewsKeywordsManager(AbstractKeywordsManager):
+    @timer()
+    def create_keyword_items(self, alpha, beta, several_news_ids=None,
+                             title_keywords=None, gen_report=False):
+        report = None
+        if gen_report:
+            report_name = '.results/filter_ab_%.2f_%.2f.txt' % (alpha, beta)
+            report = open(report_name, 'w')
+        if several_news_ids:
+            items = self.filter(base_id__in=several_news_ids)
+        else:
+            items = self.iterate()
+        keywords = []
+        ts('main loop')
+        for news in items:
+            tc(100)
+            keywords += news.create_keyword_items(alpha, beta, title_keywords,
+                                                  report)
+        if gen_report:
+            report.close()
+        if not gen_report:
+            self.bulk(keywords, NewsKeywordItem, 10000)
+
+
 class NewsKeywords(AbstractKeywords):
     base = models.ForeignKey('main.News')
     objects = NewsKeywordsManager(NewsStats)
@@ -128,7 +129,7 @@ class NewsKeywords(AbstractKeywords):
     class Meta:
         app_label = 'main'
 
-    def create_keyword_items(self, alpha, beta, report=None):
+    def create_keyword_items(self, alpha, beta, title_keywords, report=None):
         words = self.keywords.split(' ')
         data = Counter(words).most_common()
         try:
@@ -145,7 +146,8 @@ class NewsKeywords(AbstractKeywords):
         keywords = []
         for word, count in data:
             weight = float(count) / stats.summa
-            if alpha_beta(count, stats.average, stats.deviation, alpha, beta):
+            if (alpha_beta(count, stats.average, stats.deviation, alpha, beta)
+               or title_keywords and word in title_keywords[self.base_id]):
                 if not report:
                     keyword = self.keyword_item_model(
                         base=self.base, word=word, count=count, weight=weight)
@@ -159,8 +161,9 @@ class NewsKeywords(AbstractKeywords):
                     # print self.news.doc_id, left, right, count, word
                 else:
                     report.write(" [=] %d - %s\n" % (count, word.encode('cp1251')))
-        if not report:
-            self.keyword_item_model.objects.bulk_create(keywords)
+        # if not report:
+        #     self.keyword_item_model.objects.bulk_create(keywords)
+        return keywords
 
 
 class ParagraphKeywordsManager(AbstractKeywordsManager):
