@@ -3,6 +3,11 @@ from plagiat_clasterization import settings
 
 
 class Steps(object):
+    steps = {
+        'load_news_from_folder': "create News and NewsContent",
+        'create_paragraphs': "create NewsParagraph",
+    }
+
     def load_news_from_folder(self):
         """ create News and NewsContent """
         News.objects.load_from_folder(settings.NEWS_PATH)

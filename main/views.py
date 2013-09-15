@@ -1,5 +1,5 @@
 from django.views.generic import TemplateView
-from main.steps import load_news_from_folder, create_paragraphs
+from main.steps import Steps
 
 
 class MainView(TemplateView):
@@ -7,11 +7,7 @@ class MainView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(MainView, self).get_context_data(**kwargs)
-        steps = {
-            load_news_from_folder: "create News and NewsContent",
-            create_paragraphs: "create NewsParagraph",
-        }
         context.update({
-            'steps': steps
+            'steps': Steps.steps
         })
         return context
