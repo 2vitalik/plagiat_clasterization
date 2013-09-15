@@ -58,6 +58,7 @@ class News(AbstractCreateStemmedModel):
     agency = models.CharField(max_length=100)
     date = models.IntegerField()
     daytime = models.IntegerField()
+    content = None
 
     objects = NewsManager(TitleStemmed)
     stemmed_model = TitleStemmed
