@@ -1,5 +1,6 @@
 # coding: utf-8
 from django.db import models
+from libs.timer import timer, tc, ts, tp, td
 from libs.tools import dt
 from main.models.paragraph import NewsParagraph
 from main.models.stemmed import CreateStemmedManager, NewsStemmed, \
@@ -7,17 +8,16 @@ from main.models.stemmed import CreateStemmedManager, NewsStemmed, \
 
 
 class NewsContentManager(CreateStemmedManager):
+    @timer()
     def create_paragraphs(self):
-        print dt(), '@ Creating paragraphs'
-        i = 0
         items = []
+        ts('main loop')
         for news in self.iterate():
-            i += 1
-            if not i % 100:
-                print dt(), '-> processed:', i
+            tc(100)
             paragraphs = news.create_paragraphs()
             items += paragraphs
-        print dt(), '@ Adding paragraphs of DB'
+        tp()
+        td('Adding paragraphs of DB')
         self.bulk(items, model=NewsParagraph, chunk_size=100)
 
 
