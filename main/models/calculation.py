@@ -1,6 +1,7 @@
 import gc
 from django.db import models
 from libs.manager import LargeManager
+from libs.timer import ts, timer, tp, ti, tc, td
 from libs.tools import dt
 from libs.xmath import vector_cos
 
@@ -109,8 +110,8 @@ class AbstractKeywordItem(models.Model):
 
 
 class NewsKeywordItemManager(LargeManager):
+    @timer()
     def news_calculate_cosinuses(self, docs, news_docs, doc_ids=None):
-        print dt(), 'calculate_cosinuses'
         data = dict()
         i = 0
         last1 = last2 = 0
@@ -120,6 +121,9 @@ class NewsKeywordItemManager(LargeManager):
             for doc_id in doc_ids:
                 news_ids.append(news_docs[doc_id])
             items = self.filter(base_id__in=news_ids)
+            ts('get selected news')
+            items = list(items)
+            tp()
             model = CosResultSeveral
         else:
             last = CosResult.objects.order_by('-pk')
@@ -129,24 +133,19 @@ class NewsKeywordItemManager(LargeManager):
                 last2 = last.news_2_id
             items = self.iterate()
             model = CosResult
-        print dt(), 'before big sql'
+        ts('loading news words data')
         for item in items:
-            # news_id = item.news_id
+            tc(10000)
             news_id = item.base.pk
-            if not i % 10000:
-                print dt(), 'loaded', i
-            i += 1
             data.setdefault(news_id, dict())
             data[news_id][item.word] = item.weight
-            # if news_id > 50:
-            #     break
+        tp()
         results = []
         i = 0
         j = 0
+        ts('main loop for news: %d' % len(data))
         for news_id1, news1 in data.items():
-            i += 1
-            if not i % 10:
-                print dt(), 'news', i
+            tc(10)
             if news_id1 < last1:
                 continue
             for news_id2, news2 in data.items():
@@ -161,11 +160,14 @@ class NewsKeywordItemManager(LargeManager):
                 j += 1
                 if not j % 10000:
                     model.objects.bulk_create(results)
-                    print dt(), 'added', j
+                    # print dt(), 'added', j
+                    td('added cos data: %d' % j)
                     results = []
             gc.collect()
         model.objects.bulk_create(results)
-        print dt(), 'added', j
+        tp()
+        # print dt(), 'added', j
+        td('total added cos data: %d' % j)
 
 
 class NewsKeywordItem(AbstractKeywordItem):
@@ -177,9 +179,10 @@ class NewsKeywordItem(AbstractKeywordItem):
 
 
 class ParagraphKeywordItemManager(LargeManager):
+    @timer()
     def paragraph_calculate_cosinuses(self, docs, min_global_cos,
                                       several=True, save_good_news=True):
-        print dt(), 'calculate_cosinuses'
+        # print dt(), 'calculate_cosinuses'
         data = dict()
         i = 0
         # last1 = last2 = 0
@@ -199,8 +202,9 @@ class ParagraphKeywordItemManager(LargeManager):
             good_cos_results_model = CosResultAfterParagraph
         # todo: get all (!!!) pairs (except cos=0 and cos>0.95)
         # items = cos_results_model.objects.filter(cos__gt=min_cos)
+        ts('get news_ids from cos-table')
         items = cos_results_model.objects.exclude(cos=0).exclude(cos=1)
-        print dt(), '-> filter by min_cos (and getting news)'
+        # print dt(), '-> filter by min_cos (and getting news)'
         pairs = list()
         news_ids = list()
         for item in items:
@@ -210,33 +214,29 @@ class ParagraphKeywordItemManager(LargeManager):
             news_ids.append(item.news_1_id)
             news_ids.append(item.news_2_id)
         news_ids = set(news_ids)
-        print dt(), '-> filter paragraph keyword items by that news'
+        tp()
+        # print dt(), '-> filter paragraph keyword items by that news'
+        ts('get paragraph words (using news_id from prev step)')
         items = ParagraphKeywordItem.objects.filter(news_id__in=news_ids)
         for item in items:
             news_id = item.news_id
             paragraph_id = item.base_id
-            if not i % 10000:
-                print dt(), '   loaded keywords:', i
-            i += 1
+            tc(10000)
             data.setdefault(news_id, dict())
             data[news_id].setdefault(paragraph_id, dict())
             data[news_id][paragraph_id][item.word] = item.weight
             # if news_id > 50:
             #     break
-        print dt(), '   loaded keywords:', i
+        tp()
         results = []
         best_results = []
-        i = j = p = c = 0
+        j = p = c = 0
         pairs_ok = list()
-        print dt(), '-> processing all pairs:', len(pairs)
+        ts('main loop, pairs: %d' % len(pairs))
         for news_id_1, news_id_2, news_cos in pairs:
             pair_ok = False
-            i += 1
-            max_local_cos = -1
-            best_paragraph_1 = -1
-            best_paragraph_2 = -1
-            if not i % 10:
-                print dt(), '   processed pairs: ', i
+            max_local_cos = best_paragraph_1 = best_paragraph_2 = -1
+            tc(10)
             for paragraph_id_1, paragraph_1 in data[news_id_1].items():
                 # if news_id1 < last1:
                 #     continue
@@ -257,10 +257,11 @@ class ParagraphKeywordItemManager(LargeManager):
                         best_paragraph_1 = paragraph_id_1
                         best_paragraph_2 = paragraph_id_2
                     # todo: calc and save max paragraph cos
-                    # j += 1
-                    # if not j % 10000:
+                    j += 1
+                    if not j % 10000:
                     #     paragraph_cos_results_model.objects.bulk_create(results)
                     #     print dt(), '   paragraph cos added:', j
+                        td('calculated cos: %d' % j)
                     #     results = []
                 gc.collect()
             if max_local_cos != -1:
@@ -271,7 +272,8 @@ class ParagraphKeywordItemManager(LargeManager):
                     cos=max_local_cos))
                 if not c % 100:
                     paragraph_cos_results_model.objects.bulk_create(best_results)
-                    print dt(), '   best cos of paragraphs added:', c
+                    # print dt(), '   best cos of paragraphs added:', c
+                    td('best cos of paragraphs added: %d' % c)
                     best_results = []
             if save_good_news and pair_ok:
                 p += 1

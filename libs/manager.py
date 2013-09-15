@@ -1,5 +1,6 @@
 import gc
 from django.db import models
+from libs.timer import timer, td
 from libs.tools import chunks, dt
 
 
@@ -14,8 +15,10 @@ class LargeManager(models.Manager):
                 yield row
             gc.collect()
 
+    @timer()
     def bulk(self, items, model, chunk_size):
         processed = 0
         for chunk in chunks(items, chunk_size):
             processed += len(model.objects.bulk_create(chunk))
-            print dt(), '-> Processed:', processed
+            # print dt(), '-> Processed:', processed
+            td('Processed: %d' % processed)
