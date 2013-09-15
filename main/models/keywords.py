@@ -3,9 +3,10 @@ from collections import Counter
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from libs.manager import LargeManager
+from libs.timer import tp, tc, ts, timer
 from libs.tools import dt
 from libs.xmath import average_deviation, DeviationError, alpha_beta
-from main.models.calculation import NewsKeywordItem, ParagraphKeywordItem
+from main.models.calculation import NewsKeywordItem, ParagraphKeywordItem, TitleKeywordItem
 from main.models.calculation import NewsStats, ParagraphStats
 
 
@@ -55,6 +56,7 @@ class AbstractKeywords(models.Model):
 
 class NewsKeywordsManager(AbstractKeywordsManager):
     def create_keyword_items(self, alpha, beta, several_news_ids=None,
+                             title_keywords=None,
                              gen_report=False):
         print dt(), '@ Create news keywords'
         i = 0
@@ -75,11 +77,46 @@ class NewsKeywordsManager(AbstractKeywordsManager):
             report.close()
 
 
+class TitleKeywordsManager(AbstractKeywordsManager):
+    @timer()
+    def create_keyword_items(self, several_news_ids=None):
+        if several_news_ids:
+            items = self.filter(base_id__in=several_news_ids)
+        else:
+            items = self.iterate()
+        ts('main loop')
+        keywords = []
+        for news in items:
+            tc(100)
+            keywords += news.create_keyword_items()
+        tp()
+        self.bulk(keywords, TitleKeywordItem, 10000)
+
+
 class TitleKeywords(AbstractKeywords):
     base = models.ForeignKey('main.News')
+    objects = TitleKeywordsManager(None)
+    keyword_item_model = TitleKeywordItem
 
     class Meta:
         app_label = 'main'
+
+    def create_keyword_items(self):
+        # ts('calc')
+        words = self.keywords.split(' ')
+        data = Counter(words).most_common()
+        # tp()
+        # ts('create')
+        keywords = []
+        for word, count in data:
+            keyword = self.keyword_item_model(
+                base=self.base, word=word, count=count, weight=0)
+            keywords.append(keyword)
+        # tp()
+        # ts('save')
+        # self.keyword_item_model.objects.bulk_create(keywords)
+        # tp()
+        return keywords
 
 
 class NewsKeywords(AbstractKeywords):

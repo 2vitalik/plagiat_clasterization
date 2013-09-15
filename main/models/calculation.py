@@ -301,3 +301,11 @@ class ParagraphKeywordItem(AbstractKeywordItem):
 
     class Meta:
         app_label = 'main'
+
+
+class TitleKeywordItem(AbstractKeywordItem):
+    base = models.ForeignKey('main.News')
+    objects = ParagraphKeywordItemManager()
+
+    class Meta:
+        app_label = 'main'
