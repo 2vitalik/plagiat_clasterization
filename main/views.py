@@ -1,4 +1,6 @@
+# coding: utf-8
 from django.views.generic import TemplateView
+from libs.logger import logger
 from main.steps import Steps
 
 
@@ -13,6 +15,7 @@ class MainView(TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
+        logger.debug('¶')
         for step in request.POST:
             if step not in Steps.steps.keys():
                 continue
