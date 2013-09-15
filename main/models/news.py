@@ -2,6 +2,7 @@
 import os
 from xml.etree import ElementTree
 from django.db import models
+from libs.mystem import mystem
 from libs.tools import dt, w2u
 from main.models import AbstractCreateStemmedModel, TitlesStemmed, \
     CreateStemmedManager
@@ -67,3 +68,6 @@ class News(AbstractCreateStemmedModel):
     def __init__(self, *args, **kwargs):
         super(News, self).__init__(*args, **kwargs)
         self.base = self
+
+    def stem(self):
+        return mystem(self.subject)
