@@ -1,6 +1,7 @@
 import gc
 from django.db import models
 from libs.manager import LargeManager
+from libs.timer import ts, timer, tp, ti, tc
 from libs.tools import dt
 from libs.xmath import vector_cos
 
@@ -109,6 +110,7 @@ class AbstractKeywordItem(models.Model):
 
 
 class NewsKeywordItemManager(LargeManager):
+    @timer()
     def news_calculate_cosinuses(self, docs, news_docs, doc_ids=None):
         print dt(), 'calculate_cosinuses'
         data = dict()
@@ -120,6 +122,9 @@ class NewsKeywordItemManager(LargeManager):
             for doc_id in doc_ids:
                 news_ids.append(news_docs[doc_id])
             items = self.filter(base_id__in=news_ids)
+            ts('get selected news')
+            items = list(items)
+            tp()
             model = CosResultSeveral
         else:
             last = CosResult.objects.order_by('-pk')
@@ -129,10 +134,11 @@ class NewsKeywordItemManager(LargeManager):
                 last2 = last.news_2_id
             items = self.iterate()
             model = CosResult
-        print dt(), 'before big sql'
+        ts('loading news words data')
         for item in items:
             # news_id = item.news_id
             news_id = item.base.pk
+            tc(10000)
             if not i % 10000:
                 print dt(), 'loaded', i
             i += 1
@@ -140,9 +146,11 @@ class NewsKeywordItemManager(LargeManager):
             data[news_id][item.word] = item.weight
             # if news_id > 50:
             #     break
+        tp()
         results = []
         i = 0
         j = 0
+        ts('main loop for news')
         for news_id1, news1 in data.items():
             i += 1
             if not i % 10:
@@ -165,6 +173,7 @@ class NewsKeywordItemManager(LargeManager):
                     results = []
             gc.collect()
         model.objects.bulk_create(results)
+        tp()
         print dt(), 'added', j
 
 

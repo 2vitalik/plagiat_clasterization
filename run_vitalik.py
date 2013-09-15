@@ -22,7 +22,7 @@ from main.models import News, NewsContent, NewsParagraph, NewsStemmed, \
 # NewsContent.objects.create_paragraphs()
 
 ## create NewsStemmed and ParagraphStemmed
-News.objects.create_stems()
+# News.objects.create_stems()  # !!!
 # NewsContent.objects.create_stems()
 # NewsParagraph.objects.create_stems()
 
@@ -45,22 +45,22 @@ News.objects.create_stems()
 
 
 
-# # get 704 news
-# several_doc_ids = read_lines('.conf/clustered.txt')  # load clustered several_doc_ids
-# several_doc_ids = map(int, several_doc_ids)
-# docs = dict()
-# news_by_docs = dict()
-# for news in News.objects.only('doc_id'):
-#     docs[news.pk] = news.doc_id
-#     news_by_docs[news.doc_id] = news.pk
-#
-# several_news_ids = []
-# if several_doc_ids and news_by_docs:
-#     several_doc_ids = set(several_doc_ids)
-#     for doc_id in several_doc_ids:
-#         several_news_ids.append(news_by_docs[doc_id])
-# print 'loaded clustered ids'
-#
+# get 704 news
+several_doc_ids = read_lines('.conf/clustered.txt')  # load clustered several_doc_ids
+several_doc_ids = map(int, several_doc_ids)
+docs = dict()
+news_by_docs = dict()
+for news in News.objects.only('doc_id'):
+    docs[news.pk] = news.doc_id
+    news_by_docs[news.doc_id] = news.pk
+
+several_news_ids = []
+if several_doc_ids and news_by_docs:
+    several_doc_ids = set(several_doc_ids)
+    for doc_id in several_doc_ids:
+        several_news_ids.append(news_by_docs[doc_id])
+print 'loaded clustered ids'
+
 # items = NewsParagraph.objects.filter(news__in=several_news_ids).only('news')
 # # paragraphs_by_news = dict()
 # news_by_paragraph = dict()
@@ -87,13 +87,14 @@ News.objects.create_stems()
 ## create NewsKeywordItem and ParagraphKeywordItem
 # alpha = 0
 # beta = 100
-#NewsKeywords.objects.create_keyword_items(alpha, beta, several_news_ids)
-#ParagraphKeywords.objects.create_keyword_items(all_paragraphs, news_by_paragraph, valid_keywords)
+# NewsKeywords.objects.create_keyword_items(alpha, beta, several_news_ids)
+# ParagraphKeywords.objects.create_keyword_items(all_paragraphs, news_by_paragraph, valid_keywords)
 
 # todo: third mode: all news that intersects with 704
 
 ## calculate cosinuses for news
-#NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs, several_doc_ids)
+NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs,
+                                                 several_doc_ids)
 # NewsKeywordItem.objects.news_calculate_cosinuses(docs, news_by_docs)
 
 ## calculate cosinuses for paragraphs
@@ -101,7 +102,7 @@ News.objects.create_stems()
 # for news in News.objects.only('doc_id'):
 #     docs[news.pk] = news.doc_id
 # ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1)
-#ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1, several=False)
+# ParagraphKeywordItem.objects.paragraph_calculate_cosinuses(docs, 1, several=False)
 
 # todo: calc all cosinuses and then try to check different coefficient "d"
 
