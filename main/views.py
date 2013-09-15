@@ -17,7 +17,7 @@ class MainView(TemplateView):
     def post(self, request, *args, **kwargs):
         logger.debug('¶')
         for step in request.POST:
-            if step not in Steps.steps.keys():
+            if step not in Steps.get_steps():
                 continue
             getattr(Steps(), step)()
         return super(MainView, self).get(request, *args, **kwargs)
