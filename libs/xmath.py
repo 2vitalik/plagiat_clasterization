@@ -27,11 +27,11 @@ def alpha_beta(value, average, deviation, alpha, beta):
 
 def vector_cos(dict1, dict2):
     abs1 = abs2 = mult = 0
-    all_keys = set(dict1.keys() + dict2.keys())
-    for key in all_keys:
-        val1 = dict1.get(key, 0)
-        val2 = dict2.get(key, 0)
-        abs1 += val1 ** 2
-        abs2 += val2 ** 2
-        mult += val1 * val2
+    bi_keys = set(dict1) & set(dict2)
+    for key in bi_keys:
+        mult += dict1[key] * dict2[key]
+    for key in dict1:
+        abs1 += dict1[key] ** 2
+    for key in dict2:
+        abs2 += dict2[key] ** 2
     return mult / (math.sqrt(abs1) * math.sqrt(abs2))
