@@ -47,7 +47,7 @@ class AbstractKeywords(models.Model):
         try:
             summa, average, deviation = average_deviation(values)
         except DeviationError:
-            print 'x Bad news (few words):', self.base
+            print 'x Bad news (few words):', self.base, self.base.pk
             return
         return self.stats_model(base=self.base, word_count=word_count,
                                 summa=summa, average=average,
@@ -111,7 +111,7 @@ class NewsKeywordsManager(AbstractKeywordsManager):
         keywords = []
         ts('main loop')
         for news in items:
-            tc(100)
+            tc(1)
             keywords += news.create_keyword_items(alpha, beta, title_keywords,
                                                   report)
         if gen_report:
@@ -136,7 +136,7 @@ class NewsKeywords(AbstractKeywords):
             stats = self.stats_model.objects.get(base=self.base)
         except ObjectDoesNotExist:
             # print self.news_id
-            return
+            return []
         left = stats.average - alpha * stats.deviation
         right = stats.average + beta * stats.deviation
         if report:
