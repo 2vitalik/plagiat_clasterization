@@ -18,3 +18,7 @@ def save_file(filename, content, encode=None):
 
 def save_lines(filename, lines, encode=None):
     save_file(filename, '\n'.join(lines), encode)
+
+
+def load_file(filename):
+    return file(filename).read().replace('\r', '')
